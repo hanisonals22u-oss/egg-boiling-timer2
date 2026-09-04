@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Egg Time - Mr. Bean & Humpty Dumpty</title>
-  <!-- MediaPipe Hands CDN -->
+  <title>Egg Time - Jellied Humpty Dumpty & Mr. Bean</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <style>
@@ -462,7 +461,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Clap to start! Camera automatically turns on for Humpty Dumpty.</p>
+      <p class="subtitle">Clap to start! Move your palm to fly Humpty, clench to squeeze him.</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -674,17 +673,21 @@
     // Game 3: Bubble Pop
     let bubbles = [];
 
-    // Game 4: Humpty Dumpty
+    // Game 4: Fluid Jelly Humpty Dumpty Engine
     let humpty = {
       x: 230,
       y: 220,
+      targetX: 230,
+      targetY: 220,
       vx: 0,
       vy: 0,
-      baseRadius: 65,
+      baseRadius: 62,
       scaleX: 1.0,
       scaleY: 1.0,
       targetScaleX: 1.0,
       targetScaleY: 1.0,
+      jigglePhase: 0,
+      jiggleIntensity: 0,
       state: 'idle',
       isHeld: false
     };
@@ -841,6 +844,7 @@
       }
     });
 
+    // Palm Motion Flight & Hand Gestures
     function onHandResults(results) {
       if (selectedGame !== 'slime') return;
 
@@ -849,32 +853,41 @@
       if (!hands || hands.length === 0) {
         humpty.targetScaleX = 1.0;
         humpty.targetScaleY = 1.0;
+        humpty.targetX = 230;
+        humpty.targetY = 220;
         humpty.state = 'idle';
         return;
       }
 
-      // Case A: 2 Hands -> Stretch Gesture
+      // Track primary hand palm to fly Humpty Dumpty
+      const primaryHand = hands[0];
+      const palmCenter = primaryHand[9]; // Middle knuckle / center of palm
+      // Mirror X coordinate since webcam feed is mirrored
+      humpty.targetX = (1 - palmCenter.x) * canvas.width;
+      humpty.targetY = palmCenter.y * canvas.height;
+
+      // 2 Hands: Stretch Mode
       if (hands.length === 2) {
         const hand1Wrist = hands[0][0];
         const hand2Wrist = hands[1][0];
         const dist = Math.hypot(hand1Wrist.x - hand2Wrist.x, hand1Wrist.y - hand2Wrist.y);
 
-        if (dist > 0.18) {
-          const stretchFactor = Math.min(2.4, Math.max(0.6, dist * 3.4));
+        if (dist > 0.16) {
+          const stretchFactor = Math.min(2.5, Math.max(0.65, dist * 3.6));
           humpty.targetScaleX = stretchFactor;
-          humpty.targetScaleY = Math.max(0.42, 1 / stretchFactor);
+          humpty.targetScaleY = Math.max(0.40, 1 / stretchFactor);
           humpty.state = 'stretched';
+          humpty.jiggleIntensity = 0.35;
 
           const subVal = document.getElementById('hudSubValue');
           if (subVal) subVal.textContent = `STRETCHING (${Math.round(stretchFactor * 100)}%)`;
-
           score += 1;
           hudScore.textContent = score;
         }
         return;
       }
 
-      // Case B: 1 Hand -> Squeeze Gesture
+      // 1 Hand: Squeeze Gestures
       if (hands.length === 1) {
         const lm = hands[0];
         const wrist = lm[0];
@@ -887,14 +900,16 @@
         const d3 = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y);
         const avgTipDist = (d1 + d2 + d3) / 3;
 
+        // Fist / Palm squeeze threshold with proportional squish
         if (avgTipDist < 0.28) {
-          humpty.targetScaleX = 1.65;
-          humpty.targetScaleY = 0.52;
+          const squeezeDepth = Math.max(0, (0.28 - avgTipDist) / 0.16);
+          humpty.targetScaleX = 1.0 + squeezeDepth * 0.75;
+          humpty.targetScaleY = Math.max(0.42, 1.0 - squeezeDepth * 0.55);
           humpty.state = 'squeezed';
+          humpty.jiggleIntensity = 0.5;
 
           const subVal = document.getElementById('hudSubValue');
           if (subVal) subVal.textContent = 'PALM SQUEEZED!';
-
           score += 2;
           hudScore.textContent = score;
         } else {
@@ -902,7 +917,7 @@
           humpty.targetScaleY = 1.0;
           humpty.state = 'idle';
           const subVal = document.getElementById('hudSubValue');
-          if (subVal) subVal.textContent = 'OPEN PALM (READY)';
+          if (subVal) subVal.textContent = 'FLYING WITH PALM';
         }
       }
     }
@@ -911,7 +926,6 @@
       selectedGame = mode;
       [modeCityBtn, modeCatchBtn, modePopBtn, modeSlimeBtn, modeDanceBtn].forEach(btn => btn.classList.remove('active'));
 
-      // Ensure canvas is visible whenever you pick a game
       canvas.style.display = 'block';
       finaleStage.style.display = 'none';
 
@@ -926,7 +940,7 @@
         hudSubLabel.innerHTML = 'POPPED: <strong id="hudSubValue" style="color: #facc15;">0 / 36</strong>';
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
-        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">SQUEEZE PALM</strong>';
+        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">FLY & SQUEEZE PALM</strong>';
         if (isRunning && !isCamRunning) startWebcam();
       } else if (mode === 'dance') {
         modeDanceBtn.classList.add('active');
@@ -993,6 +1007,8 @@
       } else if (selectedGame === 'slime') {
         humpty.x = 230;
         humpty.y = 220;
+        humpty.targetX = 230;
+        humpty.targetY = 220;
         humpty.scaleX = 1.0;
         humpty.scaleY = 1.0;
         humpty.targetScaleX = 1.0;
@@ -1085,6 +1101,10 @@
     canvas.addEventListener('mousemove', (e) => {
       updatePointer(e.clientX, e.clientY);
       if (selectedGame === 'pop' && isInteracting) popAtCoord(mousePos.x, mousePos.y);
+      if (selectedGame === 'slime' && humpty.isHeld) {
+        humpty.targetX = mousePos.x;
+        humpty.targetY = mousePos.y;
+      }
     });
 
     canvas.addEventListener('touchstart', (e) => {
@@ -1102,6 +1122,10 @@
       if (e.touches.length > 0) {
         updatePointer(e.touches[0].clientX, e.touches[0].clientY);
         if (selectedGame === 'pop') popAtCoord(mousePos.x, mousePos.y);
+        if (selectedGame === 'slime' && humpty.isHeld) {
+          humpty.targetX = mousePos.x;
+          humpty.targetY = mousePos.y;
+        }
       }
     }, { passive: true });
 
@@ -1110,10 +1134,11 @@
         popAtCoord(mousePos.x, mousePos.y);
       } else if (selectedGame === 'slime') {
         const dist = Math.hypot(mousePos.x - humpty.x, mousePos.y - humpty.y);
-        if (dist < humpty.baseRadius + 20) {
+        if (dist < humpty.baseRadius + 30) {
           humpty.isHeld = true;
           humpty.targetScaleX = 1.45;
           humpty.targetScaleY = 0.65;
+          humpty.jiggleIntensity = 0.4;
           playSfx(480, 280, 0.1, 'sine');
         }
       } else if (selectedGame === 'dance') {
@@ -1156,7 +1181,7 @@
       } else if (selectedGame === 'pop') {
         renderPopGame();
       } else if (selectedGame === 'slime') {
-        renderHumptyDumptyGame();
+        renderFluidHumptyGame();
       } else if (selectedGame === 'dance') {
         renderBeanDance();
       }
@@ -1369,70 +1394,96 @@
       });
     }
 
-    // 4. Humpty Dumpty Game
-    function renderHumptyDumptyGame() {
+    // 4. Fluid Jellied Humpty Dumpty with Flight Tracking
+    function renderFluidHumptyGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Brick Wall
-      ctx.fillStyle = '#991b1b';
-      ctx.fillRect(0, 365, canvas.width, 95);
+      // Low Wall background
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(0, 395, canvas.width, 65);
       ctx.strokeStyle = '#fca5a5';
       ctx.lineWidth = 2;
-      for (let y = 365; y < canvas.height; y += 22) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
+      ctx.beginPath();
+      ctx.moveTo(0, 395);
+      ctx.lineTo(canvas.width, 395);
+      ctx.stroke();
 
-      // Elastic physics lerping
-      humpty.scaleX += (humpty.targetScaleX - humpty.scaleX) * 0.14;
-      humpty.scaleY += (humpty.targetScaleY - humpty.scaleY) * 0.14;
+      // Fluid Flight Tracking (Spring toward target palm coordinates)
+      const dx = humpty.targetX - humpty.x;
+      const dy = humpty.targetY - humpty.y;
+      const speed = Math.hypot(dx, dy);
 
-      if (!humpty.isHeld && !isCamRunning) {
-        const breath = Math.sin(Date.now() * 0.004) * 0.04;
-        humpty.scaleX += breath;
-        humpty.scaleY -= breath;
-      }
+      humpty.vx += dx * 0.08;
+      humpty.vy += dy * 0.08;
+      humpty.vx *= 0.82;
+      humpty.vy *= 0.82;
+
+      humpty.x += humpty.vx;
+      humpty.y += humpty.vy;
+
+      // Keep inside bounds
+      humpty.x = Math.max(70, Math.min(canvas.width - 70, humpty.x));
+      humpty.y = Math.max(70, Math.min(canvas.height - 70, humpty.y));
+
+      // Jiggle calculations from velocity & squeezing
+      humpty.jigglePhase += 0.22;
+      const flightJiggle = Math.min(0.28, speed * 0.012);
+      humpty.jiggleIntensity = Math.max(humpty.jiggleIntensity * 0.94, flightJiggle);
+
+      const jiggleWaveX = Math.sin(humpty.jigglePhase) * humpty.jiggleIntensity;
+      const jiggleWaveY = Math.cos(humpty.jigglePhase) * humpty.jiggleIntensity;
+
+      // Smooth Cubic interpolation on squeeze/stretch
+      humpty.scaleX += (humpty.targetScaleX - humpty.scaleX) * 0.16;
+      humpty.scaleY += (humpty.targetScaleY - humpty.scaleY) * 0.16;
+
+      const finalScaleX = humpty.scaleX + jiggleWaveX;
+      const finalScaleY = humpty.scaleY - jiggleWaveY;
 
       ctx.save();
       ctx.translate(humpty.x, humpty.y);
-      ctx.scale(humpty.scaleX, humpty.scaleY);
+      ctx.scale(finalScaleX, finalScaleY);
+
+      // Tilt body in flight direction
+      const tiltAngle = (humpty.vx * 0.025);
+      ctx.rotate(tiltAngle);
 
       const r = humpty.baseRadius;
 
-      // Egg Shell Body
+      // Fluid Shell Mesh using Bezier curves
+      const topOffset = Math.sin(humpty.jigglePhase * 1.5) * (humpty.jiggleIntensity * 12);
       const eggGrad = ctx.createRadialGradient(0, -20, 10, 0, 0, r * 1.3);
       eggGrad.addColorStop(0, '#ffffff');
-      eggGrad.addColorStop(0.7, '#f1f5f9');
+      eggGrad.addColorStop(0.75, '#f1f5f9');
       eggGrad.addColorStop(1, '#cbd5e1');
 
       ctx.fillStyle = eggGrad;
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 3.5;
+
       ctx.beginPath();
-      ctx.ellipse(0, 0, r * 0.95, r * 1.25, 0, 0, Math.PI * 2);
+      ctx.moveTo(0, -r * 1.25 + topOffset);
+      ctx.bezierCurveTo(r * 1.05, -r * 1.25, r * 1.15, r * 0.3, r * 0.95, r * 1.15);
+      ctx.bezierCurveTo(r * 0.45, r * 1.35, -r * 0.45, r * 1.35, -r * 0.95, r * 1.15);
+      ctx.bezierCurveTo(-r * 1.15, r * 0.3, -r * 1.05, -r * 1.25, 0, -r * 1.25 + topOffset);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
       // Red Striped Pants on bottom half
       ctx.save();
-      ctx.beginPath();
-      ctx.ellipse(0, 0, r * 0.95, r * 1.25, 0, 0, Math.PI * 2);
-      ctx.clip();
-
+      ctx.clip(); // Clips inside the fluid egg outline
       ctx.fillStyle = '#dc2626';
-      ctx.fillRect(-r, 15, r * 2, r);
-
+      ctx.fillRect(-r * 1.3, 15, r * 2.6, r * 1.5);
       ctx.fillStyle = '#fef08a';
-      for (let x = -r; x < r; x += 18) {
-        ctx.fillRect(x, 15, 8, r);
+      for (let x = -r * 1.3; x < r * 1.3; x += 18) {
+        ctx.fillRect(x, 15, 8, r * 1.5);
       }
 
       // Belt
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-r, 10, r * 2, 10);
+      ctx.fillRect(-r * 1.3, 10, r * 2.6, 10);
       ctx.fillStyle = '#facc15';
       ctx.fillRect(-10, 7, 20, 16);
       ctx.fillStyle = '#0f172a';
@@ -1450,19 +1501,26 @@
       ctx.arc(0, 10, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      const eyeOffset = (humpty.state === 'squeezed') ? 3 : 0;
+      // Sweat droplets if squeezed tight
+      if (humpty.state === 'squeezed') {
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.ellipse(r * 0.8, -r * 0.6, 4, 7, 0.4, 0, Math.PI * 2);
+        ctx.ellipse(-r * 0.8, -r * 0.5, 4, 7, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Eyes
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(-22, -35 + eyeOffset, 12, 0, Math.PI * 2);
-      ctx.arc(22, -35 + eyeOffset, 12, 0, Math.PI * 2);
+      ctx.arc(-22, -35, 12, 0, Math.PI * 2);
+      ctx.arc(22, -35, 12, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Pupils
+      // Pupils react to motion & gestures
       ctx.fillStyle = '#000000';
       if (humpty.state === 'squeezed') {
         ctx.beginPath();
@@ -1475,14 +1533,16 @@
         ctx.arc(22, -35, 3.5, 0, Math.PI * 2);
         ctx.fill();
       } else {
+        const pupilX = Math.max(-4, Math.min(4, humpty.vx * 0.3));
+        const pupilY = Math.max(-4, Math.min(4, humpty.vy * 0.3));
         ctx.beginPath();
-        ctx.arc(-20, -35, 5.5, 0, Math.PI * 2);
-        ctx.arc(20, -35, 5.5, 0, Math.PI * 2);
+        ctx.arc(-20 + pupilX, -35 + pupilY, 5.5, 0, Math.PI * 2);
+        ctx.arc(20 + pupilX, -35 + pupilY, 5.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(-22, -37, 2, 0, Math.PI * 2);
-        ctx.arc(18, -37, 2, 0, Math.PI * 2);
+        ctx.arc(-22 + pupilX, -37 + pupilY, 2, 0, Math.PI * 2);
+        ctx.arc(18 + pupilX, -37 + pupilY, 2, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -1493,7 +1553,7 @@
       ctx.arc(32, -18, 9, 0, Math.PI * 2);
       ctx.fill();
 
-      // Mouth
+      // Expressive Mouth
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -1511,19 +1571,20 @@
       }
       ctx.stroke();
 
-      // Legs
+      // Dangling Animated Legs
+      const legSway = Math.sin(humpty.jigglePhase * 1.8) * 8;
       ctx.lineWidth = 6;
       ctx.strokeStyle = '#dc2626';
       ctx.beginPath();
-      ctx.moveTo(-18, 60); ctx.lineTo(-24, 110);
-      ctx.moveTo(18, 60); ctx.lineTo(24, 110);
+      ctx.moveTo(-18, 60); ctx.lineTo(-24 + legSway, 105);
+      ctx.moveTo(18, 60); ctx.lineTo(24 - legSway, 105);
       ctx.stroke();
 
       // Shoes
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
-      ctx.ellipse(-28, 112, 10, 6, 0, 0, Math.PI * 2);
-      ctx.ellipse(28, 112, 10, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(-28 + legSway, 107, 10, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(28 - legSway, 107, 10, 6, 0, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
@@ -1545,7 +1606,6 @@
       bean.speedMultiplier += (bean.targetSpeedMultiplier - bean.speedMultiplier) * 0.08;
       bean.grooveBeat += 0.048 * bean.speedMultiplier;
 
-      // Moving stage spotlight
       const spotAngle = Math.sin(bean.grooveBeat * 0.7) * 0.4;
       ctx.save();
       ctx.translate(230, 0);
@@ -1565,7 +1625,6 @@
       ctx.restore();
       ctx.globalAlpha = 1.0;
 
-      // Platform
       ctx.fillStyle = '#111624';
       ctx.beginPath();
       ctx.ellipse(230, 400, 165, 35, 0, 0, Math.PI * 2);
@@ -1581,7 +1640,6 @@
 
       const move = bean.moveIndex;
 
-      // Dark Trousers / Legs
       ctx.lineWidth = 14;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#1e293b';
@@ -1624,14 +1682,12 @@
       }
       ctx.stroke();
 
-      // Shiny Black Shoes
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
       ctx.ellipse(rootX - 30, 397, 12, 6, 0, 0, Math.PI * 2);
       ctx.ellipse(rootX + 30, 397, 12, 6, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Brown Tweed Jacket (Torso)
       ctx.fillStyle = '#78350f';
       ctx.beginPath();
       ctx.roundRect(rootX - 24, rootY - 70, 48, 70, 10);
@@ -1640,7 +1696,6 @@
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // White Shirt Collar
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.moveTo(rootX - 12, rootY - 70);
@@ -1649,7 +1704,6 @@
       ctx.closePath();
       ctx.fill();
 
-      // Red Skinny Tie
       ctx.fillStyle = '#ef4444';
       ctx.beginPath();
       ctx.moveTo(rootX - 3, rootY - 50);
@@ -1660,7 +1714,6 @@
       ctx.closePath();
       ctx.fill();
 
-      // Tweed Arms
       ctx.lineWidth = 10;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#78350f';
@@ -1704,7 +1757,6 @@
       }
       ctx.stroke();
 
-      // Head & Face
       const headTilt = Math.sin(bean.grooveBeat * 2) * 0.15;
       const headX = rootX;
       const headY = rootY - 95;
@@ -1718,19 +1770,16 @@
       ctx.ellipse(0, 0, 19, 25, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Ears
       ctx.beginPath();
       ctx.ellipse(-20, 2, 6, 9, 0, 0, Math.PI * 2);
       ctx.ellipse(20, 2, 6, 9, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Hair
       ctx.fillStyle = '#1e1b4b';
       ctx.beginPath();
       ctx.arc(0, -9, 20, Math.PI, 0);
       ctx.fill();
 
-      // Goofy Eyes
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(-7, -2, 6.5, 0, Math.PI * 2);
@@ -1744,7 +1793,6 @@
       ctx.arc(7 + pupilShift, -2, 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Eyebrows
       ctx.strokeStyle = '#1e1b4b';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -1752,7 +1800,6 @@
       ctx.moveTo(2, -10); ctx.quadraticCurveTo(7, -16, 13, -11);
       ctx.stroke();
 
-      // Nose & Grin
       ctx.beginPath();
       ctx.moveTo(0, -2); ctx.lineTo(3, 8); ctx.lineTo(-1, 8);
       ctx.stroke();
@@ -1907,7 +1954,7 @@
         btn.classList.add('selected');
         totalSeconds = parseInt(btn.getAttribute('data-seconds'), 10);
         resetTimer();
-        startTimer(); // Immediately runs on preset click
+        startTimer();
       });
     });
 
