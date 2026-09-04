@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Egg Time - Mr. Bean Edition</title>
+  <title>Egg Time - Humpty Dumpty Webcam Squish</title>
+  <!-- MediaPipe Hands CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <style>
     :root {
       --bg: #07090e;
@@ -69,14 +72,14 @@
     .subtitle {
       font-size: 0.9rem;
       color: var(--gray);
-      margin-bottom: 1.6rem;
+      margin-bottom: 1.4rem;
     }
 
     .time-readout {
       font-size: 5rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      margin-bottom: 1.4rem;
+      margin-bottom: 1.2rem;
       color: var(--white);
       letter-spacing: -1.5px;
       line-height: 1;
@@ -117,7 +120,7 @@
       padding: 0.75rem 1.1rem;
       border-radius: 14px;
       width: 100%;
-      margin-bottom: 1.4rem;
+      margin-bottom: 1.2rem;
     }
 
     .custom-inputs input {
@@ -150,26 +153,32 @@
       background: #334155;
     }
 
-    .clap-trigger-bar {
+    /* Clap & Cam Bars */
+    .sensors-row {
+      display: flex;
+      gap: 0.6rem;
       width: 100%;
+      margin-bottom: 1.2rem;
+    }
+
+    .clap-trigger-bar {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: #090c14;
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 0.75rem 1.1rem;
-      margin-bottom: 1.4rem;
+      padding: 0.65rem 0.9rem;
     }
 
-    .clap-toggle-btn {
+    .clap-toggle-btn, .cam-toggle-btn {
       background: rgba(34, 197, 94, 0.15);
       border: 1px solid var(--accent);
       color: #4ade80;
-      box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
       border-radius: 8px;
-      padding: 0.4rem 0.85rem;
-      font-size: 0.85rem;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -178,17 +187,20 @@
       transition: all 0.2s;
     }
 
-    .clap-meter-pill {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--gray);
+    .cam-toggle-btn {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    .cam-toggle-btn.active {
+      background: #0284c7;
+      color: #fff;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
     }
 
     .clap-track {
-      width: 70px;
+      width: 50px;
       height: 6px;
       background: #182030;
       border-radius: 3px;
@@ -255,7 +267,7 @@
       border-radius: 10px;
       color: var(--gray);
       font-weight: 700;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       cursor: pointer;
       transition: all 0.2s;
       white-space: nowrap;
@@ -321,6 +333,29 @@
       display: none;
       z-index: 5;
       cursor: crosshair;
+    }
+
+    /* Webcam PiP (Picture-in-picture) mini feed */
+    .cam-preview-pip {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 105px;
+      height: 75px;
+      border-radius: 10px;
+      border: 2px solid #38bdf8;
+      overflow: hidden;
+      z-index: 20;
+      background: #000;
+      display: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+    }
+
+    #webcamVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
     }
 
     .finale-stage {
@@ -429,7 +464,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Clap along to trigger Mr. Bean's hilarious dance moves!</p>
+      <p class="subtitle">Use your camera: squeeze 1 hand to squash Humpty, 2 hands to stretch him!</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -447,17 +482,21 @@
         <button class="set-custom-btn" id="applyCustomBtn">Set</button>
       </div>
 
-      <div class="clap-trigger-bar">
-        <button class="clap-toggle-btn" id="clapToggleBtn">
-          <span>🎙️</span>
-          <span id="clapStatusText">Clap Armed (Ready)</span>
-        </button>
-        <div class="clap-meter-pill">
-          <span>MIC</span>
+      <!-- Controls row: Clap & Cam -->
+      <div class="sensors-row">
+        <div class="clap-trigger-bar">
+          <button class="clap-toggle-btn" id="clapToggleBtn">
+            <span>🎙️</span>
+            <span id="clapStatusText">Clap</span>
+          </button>
           <div class="clap-track">
             <div class="clap-fill" id="clapMeterFill"></div>
           </div>
         </div>
+        <button class="cam-toggle-btn" id="camToggleBtn">
+          <span>📷</span>
+          <span id="camStatusText">Enable Hand Cam</span>
+        </button>
       </div>
 
       <div class="controls">
@@ -470,13 +509,13 @@
         <button class="mode-btn active" id="modeCityBtn">🏙 City</button>
         <button class="mode-btn" id="modeCatchBtn">🍳 Catch</button>
         <button class="mode-btn" id="modePopBtn">🫧 Pop</button>
-        <button class="mode-btn" id="modeSlimeBtn">🐣 Squish</button>
-        <button class="mode-btn" id="modeDanceBtn">🥸 Mr. Bean</button>
+        <button class="mode-btn" id="modeSlimeBtn">🥚 Humpty</button>
+        <button class="mode-btn" id="modeDanceBtn">🕺 Dance</button>
       </div>
 
       <div class="game-hud-bar">
         <span>SCORE: <strong id="hudScore" style="color: #22c55e;">0</strong></span>
-        <span id="hudSubLabel">HEAT GAUGE: <strong id="hudSubValue" style="color: #38bdf8;">ACTIVE</strong></span>
+        <span id="hudSubLabel">ACTION: <strong id="hudSubValue" style="color: #38bdf8;">READY</strong></span>
       </div>
 
       <div class="progress-bar-track">
@@ -485,6 +524,11 @@
 
       <div class="arena-square" id="arenaSquare">
         <canvas id="gameCanvas" width="460" height="460"></canvas>
+
+        <!-- Mini Webcam Preview -->
+        <div class="cam-preview-pip" id="camPip">
+          <video id="webcamVideo" autoplay playsinline muted></video>
+        </div>
 
         <div class="finale-stage" id="finaleStage">
           <div class="nest"></div>
@@ -590,6 +634,10 @@
     const clapToggleBtn = document.getElementById('clapToggleBtn');
     const clapStatusText = document.getElementById('clapStatusText');
     const clapMeterFill = document.getElementById('clapMeterFill');
+    const camToggleBtn = document.getElementById('camToggleBtn');
+    const camStatusText = document.getElementById('camStatusText');
+    const camPip = document.getElementById('camPip');
+    const webcamVideo = document.getElementById('webcamVideo');
 
     const modeCityBtn = document.getElementById('modeCityBtn');
     const modeCatchBtn = document.getElementById('modeCatchBtn');
@@ -630,38 +678,32 @@
     // Game 3: Bubble Pop
     let bubbles = [];
 
-    // Game 4: Slime
-    let slime = {
+    // Game 4: Humpty Dumpty Squishy & Stretch Engine
+    let humpty = {
       x: 230,
-      y: 230,
+      y: 220,
       vx: 0,
       vy: 0,
-      baseRadius: 46,
-      stretchX: 1,
-      stretchY: 1,
+      baseRadius: 65,
+      scaleX: 1.0,
+      scaleY: 1.0,
+      targetScaleX: 1.0,
+      targetScaleY: 1.0,
+      state: 'idle', // 'idle', 'squeezed', 'stretched'
       isHeld: false
     };
 
-    // Game 5: Mr. Bean Dancing Engine
-    let bean = {
+    // Game 5: Dancer
+    let dancer = {
       moveIndex: 0,
       grooveBeat: 0,
       speedMultiplier: 1.0,
       targetSpeedMultiplier: 1.0,
       lastClapTime: 0,
-      bpm: 85,
-      spotColor: '#f59e0b',
-      spotColors: ['#f59e0b', '#ef4444', '#38bdf8', '#a855f7', '#10b981', '#f43f5e'],
-      moveNames: [
-        'Ear-Pull Shimmy',
-        'Lapel Hip-Twist',
-        'Awkward Knee-Knock',
-        'Church Hymn Wiggle',
-        'The Silly Chicken',
-        'Disco Point & Pout',
-        'Limbo Matrix Crouch',
-        'Goofy Marching Salute'
-      ],
+      bpm: 80,
+      spotColor: '#38bdf8',
+      spotColors: ['#38bdf8', '#f43f5e', '#a855f7', '#facc15', '#22c55e', '#ec4899'],
+      moveNames: ['Groove Bob', 'Disco Point', 'Arm Wave', 'Cross Pop', 'Spin Jump'],
       clapsCount: 0
     };
 
@@ -671,6 +713,11 @@
     let clapMicStream = null;
     let isClapArmed = false;
     let clapCooldown = false;
+
+    // MediaPipe Hands Engine
+    let handsEstimator = null;
+    let cameraInstance = null;
+    let isCamRunning = false;
 
     async function initClapListener() {
       if (isClapArmed) return;
@@ -686,10 +733,10 @@
         source.connect(clapAnalyser);
 
         isClapArmed = true;
-        clapStatusText.textContent = "Clap to Trigger";
+        clapStatusText.textContent = "Clap Ready";
         listenForClap();
       } catch (e) {
-        clapStatusText.textContent = "Click to Enable Mic";
+        clapStatusText.textContent = "Enable Mic";
       }
     }
 
@@ -717,14 +764,13 @@
         if (!isRunning) startTimer();
 
         if (selectedGame === 'dance') {
-          triggerBeanMove();
+          dancer.moveIndex = (dancer.moveIndex + 1) % dancer.moveNames.length;
+          playSfx(400, 800, 0.15, 'triangle');
         } else {
           toggleTimerRunState();
         }
 
-        setTimeout(() => {
-          clapCooldown = false;
-        }, 120);
+        setTimeout(() => { clapCooldown = false; }, 180);
       }
 
       requestAnimationFrame(listenForClap);
@@ -734,6 +780,127 @@
     window.addEventListener('click', () => {
       if (!isClapArmed) initClapListener();
     }, { once: true });
+
+    // WebCam Hand Recognition Setup
+    async function toggleWebcam() {
+      if (isCamRunning) {
+        if (cameraInstance) cameraInstance.stop();
+        isCamRunning = false;
+        camToggleBtn.classList.remove('active');
+        camStatusText.textContent = "Enable Hand Cam";
+        camPip.style.display = 'none';
+        return;
+      }
+
+      try {
+        camStatusText.textContent = "Loading Vision...";
+        handsEstimator = new Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        handsEstimator.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.55,
+          minTrackingConfidence: 0.55
+        });
+
+        handsEstimator.onResults(onHandResults);
+
+        cameraInstance = new Camera(webcamVideo, {
+          onFrame: async () => {
+            if (isCamRunning) await handsEstimator.send({ image: webcamVideo });
+          },
+          width: 320,
+          height: 240
+        });
+
+        await cameraInstance.start();
+        isCamRunning = true;
+        camToggleBtn.classList.add('active');
+        camStatusText.textContent = "Hand Cam Live";
+        camPip.style.display = 'block';
+      } catch (err) {
+        alert("Camera permission denied or not available on this device.");
+        camStatusText.textContent = "Camera Failed";
+      }
+    }
+
+    camToggleBtn.addEventListener('click', toggleWebcam);
+
+    // Hand Tracking Gesture Interpreter
+    function onHandResults(results) {
+      if (selectedGame !== 'slime') return;
+
+      const hands = results.multiHandLandmarks;
+
+      if (!hands || hands.length === 0) {
+        humpty.targetScaleX = 1.0;
+        humpty.targetScaleY = 1.0;
+        humpty.state = 'idle';
+        return;
+      }
+
+      // Case A: 2 Hands -> Stretch Gesture
+      if (hands.length === 2) {
+        const hand1Wrist = hands[0][0];
+        const hand2Wrist = hands[1][0];
+
+        // Distance between two hands in viewport ratio
+        const dist = Math.hypot(hand1Wrist.x - hand2Wrist.x, hand1Wrist.y - hand2Wrist.y);
+
+        // Clapped / Close Palms -> pulling apart stretches Humpty
+        if (dist > 0.18) {
+          const stretchFactor = Math.min(2.4, Math.max(0.6, dist * 3.4));
+          humpty.targetScaleX = stretchFactor;
+          humpty.targetScaleY = Math.max(0.42, 1 / stretchFactor);
+          humpty.state = 'stretched';
+
+          const subVal = document.getElementById('hudSubValue');
+          if (subVal) subVal.textContent = `STRETCHING (${Math.round(stretchFactor * 100)}%)`;
+
+          score += 1;
+          hudScore.textContent = score;
+        }
+        return;
+      }
+
+      // Case B: 1 Hand -> Squeeze / Fist Gesture
+      if (hands.length === 1) {
+        const lm = hands[0];
+        const wrist = lm[0];
+        const indexTip = lm[8];
+        const middleTip = lm[12];
+        const ringTip = lm[16];
+
+        // Measure average distance from fingertips to wrist (open palm vs clenched fist)
+        const d1 = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+        const d2 = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y);
+        const d3 = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y);
+        const avgTipDist = (d1 + d2 + d3) / 3;
+
+        // Fist / Palm squeeze threshold
+        if (avgTipDist < 0.28) {
+          // Closed palm / Fist SQUEEZE: flat egg
+          humpty.targetScaleX = 1.65;
+          humpty.targetScaleY = 0.52;
+          humpty.state = 'squeezed';
+
+          const subVal = document.getElementById('hudSubValue');
+          if (subVal) subVal.textContent = 'PALM SQUEEZED!';
+
+          score += 2;
+          hudScore.textContent = score;
+        } else {
+          // Open Palm: relaxed shape
+          humpty.targetScaleX = 1.0;
+          humpty.targetScaleY = 1.0;
+          humpty.state = 'idle';
+          const subVal = document.getElementById('hudSubValue');
+          if (subVal) subVal.textContent = 'OPEN PALM (READY)';
+        }
+      }
+    }
 
     function selectGameMode(mode) {
       selectedGame = mode;
@@ -750,10 +917,10 @@
         hudSubLabel.innerHTML = 'POPPED: <strong id="hudSubValue" style="color: #facc15;">0 / 36</strong>';
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
-        hudSubLabel.innerHTML = 'BOUNCES: <strong id="hudSubValue" style="color: #4ade80;">0</strong>';
+        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">SQUEEZE PALM</strong>';
       } else if (mode === 'dance') {
         modeDanceBtn.classList.add('active');
-        hudSubLabel.innerHTML = `MR. BEAN: <strong id="hudSubValue" style="color: #f59e0b;">${bean.bpm} BPM</strong>`;
+        hudSubLabel.innerHTML = 'DANCE: <strong id="hudSubValue" style="color: #f43f5e;">READY</strong>';
       }
 
       if (gameActive) initCurrentGame();
@@ -814,66 +981,13 @@
         const subVal = document.getElementById('hudSubValue');
         if (subVal) subVal.textContent = '0 / 36';
       } else if (selectedGame === 'slime') {
-        slime.x = 230;
-        slime.y = 230;
-        slime.vx = 0;
-        slime.vy = 0;
-        slime.stretchX = 1;
-        slime.stretchY = 1;
-        slime.isHeld = false;
-        const subVal = document.getElementById('hudSubValue');
-        if (subVal) subVal.textContent = '0';
-      } else if (selectedGame === 'dance') {
-        bean.moveIndex = 0;
-        bean.clapsCount = 0;
-        bean.speedMultiplier = 1.0;
-        bean.targetSpeedMultiplier = 1.0;
-        bean.lastClapTime = Date.now();
-        bean.bpm = 85;
-        const subVal = document.getElementById('hudSubValue');
-        if (subVal) subVal.textContent = `${bean.bpm} BPM`;
-      }
-    }
-
-    function triggerBeanMove() {
-      const now = Date.now();
-      if (bean.lastClapTime > 0) {
-        const interval = (now - bean.lastClapTime) / 1000;
-        if (interval > 0.08 && interval < 1.8) {
-          const instantBpm = Math.round(60 / interval);
-          bean.bpm = Math.min(260, Math.max(70, instantBpm));
-          bean.targetSpeedMultiplier = Math.min(3.8, Math.max(0.9, bean.bpm / 80));
-        }
-      }
-      bean.lastClapTime = now;
-
-      bean.moveIndex = (bean.moveIndex + 1) % bean.moveNames.length;
-      bean.clapsCount++;
-      bean.spotColor = bean.spotColors[bean.moveIndex % bean.spotColors.length];
-      score += 25;
-      hudScore.textContent = score;
-
-      const subVal = document.getElementById('hudSubValue');
-      if (subVal) subVal.textContent = `${bean.bpm} BPM (${bean.moveNames[bean.moveIndex]})`;
-
-      // Goofy sound effects for Mr. Bean
-      const pitches = [180, 240, 320, 420, 290, 520, 360, 220];
-      const p = pitches[bean.moveIndex % pitches.length];
-      playSfx(p, p * 1.8, 0.14, 'triangle');
-
-      // Sparkles
-      for (let i = 0; i < 20; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const spd = Math.random() * 9 + 4;
-        particles.push({
-          x: 230,
-          y: 220,
-          vx: Math.cos(angle) * spd,
-          vy: Math.sin(angle) * spd - 2,
-          size: Math.random() * 5 + 3,
-          color: bean.spotColors[Math.floor(Math.random() * bean.spotColors.length)],
-          life: 1.0
-        });
+        humpty.x = 230;
+        humpty.y = 220;
+        humpty.scaleX = 1.0;
+        humpty.scaleY = 1.0;
+        humpty.targetScaleX = 1.0;
+        humpty.targetScaleY = 1.0;
+        humpty.state = 'idle';
       }
     }
 
@@ -907,7 +1021,7 @@
     });
     window.addEventListener('mouseup', () => { 
       isInteracting = false; 
-      slime.isHeld = false;
+      humpty.isHeld = false;
     });
     canvas.addEventListener('mousemove', (e) => {
       updatePointer(e.clientX, e.clientY);
@@ -923,7 +1037,7 @@
     }, { passive: true });
     window.addEventListener('touchend', () => { 
       isInteracting = false; 
-      slime.isHeld = false;
+      humpty.isHeld = false;
     });
     canvas.addEventListener('touchmove', (e) => {
       if (e.touches.length > 0) {
@@ -936,13 +1050,13 @@
       if (selectedGame === 'pop') {
         popAtCoord(mousePos.x, mousePos.y);
       } else if (selectedGame === 'slime') {
-        const dist = Math.hypot(mousePos.x - slime.x, mousePos.y - slime.y);
-        if (dist < slime.baseRadius + 20) {
-          slime.isHeld = true;
-          playSfx(550, 750, 0.08, 'triangle');
+        const dist = Math.hypot(mousePos.x - humpty.x, mousePos.y - humpty.y);
+        if (dist < humpty.baseRadius + 20) {
+          humpty.isHeld = true;
+          humpty.targetScaleX = 1.45;
+          humpty.targetScaleY = 0.65;
+          playSfx(480, 280, 0.1, 'sine');
         }
-      } else if (selectedGame === 'dance') {
-        triggerBeanMove();
       }
     }
 
@@ -981,9 +1095,9 @@
       } else if (selectedGame === 'pop') {
         renderPopGame();
       } else if (selectedGame === 'slime') {
-        renderSlimeGame();
+        renderHumptyDumptyGame();
       } else if (selectedGame === 'dance') {
-        renderBeanDance();
+        renderDancePlaceholder();
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -1194,342 +1308,200 @@
       });
     }
 
-    // 4. Squishy Slime Egg
-    function renderSlimeGame() {
+    // 4. Humpty Dumpty Squishy & Stretch Engine
+    function renderHumptyDumptyGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      if (slime.isHeld) {
-        const dx = mousePos.x - slime.x;
-        const dy = mousePos.y - slime.y;
-        slime.vx += dx * 0.18;
-        slime.vy += dy * 0.18;
-        slime.vx *= 0.72;
-        slime.vy *= 0.72;
-
-        slime.stretchX = 1 + Math.abs(dx) * 0.005;
-        slime.stretchY = 1 + Math.abs(dy) * 0.005;
-      } else {
-        slime.vy += 0.45;
-        slime.vx *= 0.985;
-        slime.vy *= 0.985;
-
-        slime.stretchX += (1 - slime.stretchX) * 0.12;
-        slime.stretchY += (1 - slime.stretchY) * 0.12;
+      // Brick Wall at bottom for Humpty to sit on
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(0, 365, canvas.width, 95);
+      ctx.strokeStyle = '#fca5a5';
+      ctx.lineWidth = 2;
+      for (let y = 365; y < canvas.height; y += 22) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
       }
 
-      slime.x += slime.vx;
-      slime.y += slime.vy;
+      // Elastic physics lerping
+      humpty.scaleX += (humpty.targetScaleX - humpty.scaleX) * 0.14;
+      humpty.scaleY += (humpty.targetScaleY - humpty.scaleY) * 0.14;
 
-      const r = slime.baseRadius;
-      let bounced = false;
-
-      if (slime.y > canvas.height - r) {
-        slime.y = canvas.height - r;
-        slime.vy = -slime.vy * 0.68;
-        slime.stretchX = 1.4;
-        slime.stretchY = 0.65;
-        bounced = true;
-      }
-      if (slime.y < r) {
-        slime.y = r;
-        slime.vy = -slime.vy * 0.68;
-        bounced = true;
-      }
-      if (slime.x > canvas.width - r) {
-        slime.x = canvas.width - r;
-        slime.vx = -slime.vx * 0.68;
-        slime.stretchX = 0.65;
-        slime.stretchY = 1.4;
-        bounced = true;
-      }
-      if (slime.x < r) {
-        slime.x = r;
-        slime.vx = -slime.vx * 0.68;
-        slime.stretchX = 0.65;
-        slime.stretchY = 1.4;
-        bounced = true;
-      }
-
-      if (bounced && (Math.abs(slime.vx) > 3 || Math.abs(slime.vy) > 3)) {
-        score += 5;
-        hudScore.textContent = score;
-        const subVal = document.getElementById('hudSubValue');
-        if (subVal) subVal.textContent = parseInt(subVal.textContent || '0', 10) + 1;
-        playSfx(300, 150, 0.08, 'sine');
-        createExplosion(slime.x, slime.y, '#4ade80', 6);
+      if (!humpty.isHeld && !isCamRunning) {
+        // Natural gentle breathing wobble
+        const breath = Math.sin(Date.now() * 0.004) * 0.04;
+        humpty.scaleX += breath;
+        humpty.scaleY -= breath;
       }
 
       ctx.save();
-      ctx.translate(slime.x, slime.y);
-      ctx.scale(slime.stretchX, slime.stretchY);
+      ctx.translate(humpty.x, humpty.y);
+      ctx.scale(humpty.scaleX, humpty.scaleY);
 
-      const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, r);
-      grad.addColorStop(0, '#86efac');
-      grad.addColorStop(0.7, '#22c55e');
-      grad.addColorStop(1, '#15803d');
+      const r = humpty.baseRadius;
 
-      ctx.fillStyle = grad;
+      // Egg Shell Body
+      const eggGrad = ctx.createRadialGradient(0, -20, 10, 0, 0, r * 1.3);
+      eggGrad.addColorStop(0, '#ffffff');
+      eggGrad.addColorStop(0.7, '#f1f5f9');
+      eggGrad.addColorStop(1, '#cbd5e1');
+
+      ctx.fillStyle = eggGrad;
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.ellipse(0, 0, r * 0.9, r * 1.15, 0, 0, Math.PI * 2);
+      // Humpty egg shape (tapered top, bulbous bottom)
+      ctx.ellipse(0, 0, r * 0.95, r * 1.25, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Red Striped Pants on bottom half
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 0.95, r * 1.25, 0, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-r, 15, r * 2, r);
+
+      ctx.fillStyle = '#fef08a';
+      for (let x = -r; x < r; x += 18) {
+        ctx.fillRect(x, 15, 8, r);
+      }
+
+      // Belt
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-r, 10, r * 2, 10);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-10, 7, 20, 16);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-6, 10, 12, 10);
+      ctx.restore();
+
+      // Blue Bowtie
+      ctx.fillStyle = '#2563eb';
+      ctx.beginPath();
+      ctx.moveTo(-18, 5); ctx.lineTo(-2, 10); ctx.lineTo(-18, 15); ctx.closePath();
+      ctx.moveTo(18, 5); ctx.lineTo(2, 10); ctx.lineTo(18, 15); ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#1d4ed8';
+      ctx.beginPath();
+      ctx.arc(0, 10, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#052e16';
-      ctx.beginPath();
-      ctx.arc(-14, -6, 5, 0, Math.PI * 2);
-      ctx.arc(14, -6, 5, 0, Math.PI * 2);
-      ctx.fill();
+      // Face Expressions based on state
+      const eyeOffset = (humpty.state === 'squeezed') ? 3 : 0;
 
+      // Eyes
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(-12, -8, 2, 0, Math.PI * 2);
-      ctx.arc(16, -8, 2, 0, Math.PI * 2);
+      ctx.arc(-22, -35 + eyeOffset, 12, 0, Math.PI * 2);
+      ctx.arc(22, -35 + eyeOffset, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Pupils
+      ctx.fillStyle = '#000000';
+      if (humpty.state === 'squeezed') {
+        // Crossed Squished eyes
+        ctx.beginPath();
+        ctx.arc(-18, -35, 5, 0, Math.PI * 2);
+        ctx.arc(18, -35, 5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (humpty.state === 'stretched') {
+        // Shocked dilated pupils
+        ctx.beginPath();
+        ctx.arc(-22, -35, 3.5, 0, Math.PI * 2);
+        ctx.arc(22, -35, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Normal cheerful look
+        ctx.beginPath();
+        ctx.arc(-20, -35, 5.5, 0, Math.PI * 2);
+        ctx.arc(20, -35, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(-22, -37, 2, 0, Math.PI * 2);
+        ctx.arc(18, -37, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Rosy Cheeks
+      ctx.fillStyle = 'rgba(248, 113, 113, 0.45)';
+      ctx.beginPath();
+      ctx.arc(-32, -18, 9, 0, Math.PI * 2);
+      ctx.arc(32, -18, 9, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+      // Mouth
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.ellipse(-20, 4, 6, 3, 0, 0, Math.PI * 2);
-      ctx.ellipse(20, 4, 6, 3, 0, 0, Math.PI * 2);
+      if (humpty.state === 'squeezed') {
+        // Squiggly strained mouth
+        ctx.moveTo(-16, -10);
+        ctx.lineTo(-6, -14);
+        ctx.lineTo(6, -8);
+        ctx.lineTo(16, -12);
+      } else if (humpty.state === 'stretched') {
+        // Open gasp "O"
+        ctx.ellipse(0, -10, 8, 14, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.fill();
+      } else {
+        // Wide toothy smile
+        ctx.arc(0, -16, 16, 0.2, Math.PI - 0.2);
+      }
+      ctx.stroke();
+
+      // Dangling Legs over the wall
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(-18, 60); ctx.lineTo(-24, 110);
+      ctx.moveTo(18, 60); ctx.lineTo(24, 110);
+      ctx.stroke();
+
+      // Shiny Black Boots
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(-28, 112, 10, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(28, 112, 10, 6, 0, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
     }
 
-    // 5. Mr. Bean Dancing Engine
-    function renderBeanDance() {
+    // 5. Dance Placeholder
+    function renderDancePlaceholder() {
       ctx.fillStyle = '#06080f';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      dancer.grooveBeat += 0.05;
 
-      const timeSinceLastClap = (Date.now() - bean.lastClapTime) / 1000;
-      if (timeSinceLastClap > 1.2) {
-        bean.targetSpeedMultiplier = 1.0;
-        bean.bpm = Math.max(75, Math.round(bean.bpm * 0.98));
-        const subVal = document.getElementById('hudSubValue');
-        if (subVal) subVal.textContent = `${bean.bpm} BPM (${bean.moveNames[bean.moveIndex]})`;
-      }
-
-      bean.speedMultiplier += (bean.targetSpeedMultiplier - bean.speedMultiplier) * 0.08;
-      bean.grooveBeat += 0.048 * bean.speedMultiplier;
-
-      // Moving stage spotlight
-      const spotAngle = Math.sin(bean.grooveBeat * 0.7) * 0.4;
-      ctx.save();
-      ctx.translate(230, 0);
-      ctx.rotate(spotAngle);
-      const spotGrad = ctx.createLinearGradient(0, 0, 0, 460);
-      spotGrad.addColorStop(0, bean.spotColor);
-      spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = spotGrad;
-      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = dancer.spotColor;
       ctx.beginPath();
-      ctx.moveTo(-35, 0);
-      ctx.lineTo(35, 0);
-      ctx.lineTo(150, 460);
-      ctx.lineTo(-150, 460);
-      ctx.closePath();
+      ctx.arc(230, 180 + Math.sin(dancer.grooveBeat * 2) * 15, 30, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
-      ctx.globalAlpha = 1.0;
 
-      // Platform
-      ctx.fillStyle = '#111624';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.ellipse(230, 400, 165, 35, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = bean.spotColor;
-      ctx.lineWidth = 3;
+      ctx.moveTo(230, 210);
+      ctx.lineTo(230, 320);
+      ctx.moveTo(230, 240);
+      ctx.lineTo(180, 200 + Math.cos(dancer.grooveBeat) * 30);
+      ctx.moveTo(230, 240);
+      ctx.lineTo(280, 200 - Math.cos(dancer.grooveBeat) * 30);
+      ctx.moveTo(230, 320);
+      ctx.lineTo(190, 380);
+      ctx.moveTo(230, 320);
+      ctx.lineTo(270, 380);
       ctx.stroke();
-
-      const bobY = Math.abs(Math.sin(bean.grooveBeat * 2.5)) * (12 * Math.min(1.7, bean.speedMultiplier));
-      const swayX = Math.sin(bean.grooveBeat * 1.4) * (10 * Math.min(1.7, bean.speedMultiplier));
-      let rootX = 230 + swayX;
-      let rootY = 325 - bobY;
-
-      const move = bean.moveIndex;
-
-      // Dark Trousers / Legs
-      ctx.lineWidth = 14;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#1e293b';
-
-      ctx.beginPath();
-      switch (move) {
-        case 0: // Ear-Pull Shimmy
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 25, rootY + 40); ctx.lineTo(rootX - 28, 395);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 25, rootY + 40); ctx.lineTo(rootX + 28, 395);
-          break;
-        case 1: // Lapel Hip-Twist
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 35, rootY + 35); ctx.lineTo(rootX - 45, 395);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 18, rootY + 40); ctx.lineTo(rootX + 25, 395);
-          break;
-        case 2: // Awkward Knee-Knock
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 5, rootY + 35); ctx.lineTo(rootX - 35, 395);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 5, rootY + 35); ctx.lineTo(rootX + 35, 395);
-          break;
-        case 3: // Church Hymn Wiggle
-          ctx.moveTo(rootX - 8, rootY); ctx.lineTo(rootX - 18, rootY + 40); ctx.lineTo(rootX - 22, 395);
-          ctx.moveTo(rootX + 8, rootY); ctx.lineTo(rootX + 18, rootY + 40); ctx.lineTo(rootX + 22, 395);
-          break;
-        case 4: // Silly Chicken
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 35, rootY + 25); ctx.lineTo(rootX - 30, 395);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 35, rootY + 25); ctx.lineTo(rootX + 30, 395);
-          break;
-        case 5: // Disco Point & Pout
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 40, rootY + 35); ctx.lineTo(rootX - 55, 395);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 20, rootY + 40); ctx.lineTo(rootX + 25, 395);
-          break;
-        case 6: // Limbo Matrix
-          rootY += 15;
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 45, rootY + 25); ctx.lineTo(rootX - 35, 395);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 40, rootY + 25); ctx.lineTo(rootX + 50, 395);
-          break;
-        case 7: // Goofy Marching
-          ctx.moveTo(rootX - 10, rootY); ctx.lineTo(rootX - 30, rootY + 15); ctx.lineTo(rootX - 20, 370);
-          ctx.moveTo(rootX + 10, rootY); ctx.lineTo(rootX + 20, rootY + 40); ctx.lineTo(rootX + 25, 395);
-          break;
-      }
-      ctx.stroke();
-
-      // Shiny Black Shoes
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.ellipse(rootX - 30, 397, 12, 6, 0, 0, Math.PI * 2);
-      ctx.ellipse(rootX + 30, 397, 12, 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Brown Tweed Jacket (Torso)
-      ctx.fillStyle = '#78350f';
-      ctx.beginPath();
-      ctx.roundRect(rootX - 24, rootY - 70, 48, 70, 10);
-      ctx.fill();
-      ctx.strokeStyle = '#451a03';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // White Shirt Collar V-Shape
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(rootX - 12, rootY - 70);
-      ctx.lineTo(rootX, rootY - 45);
-      ctx.lineTo(rootX + 12, rootY - 70);
-      ctx.closePath();
-      ctx.fill();
-
-      // Red Skinny Tie
-      ctx.fillStyle = '#ef4444';
-      ctx.beginPath();
-      ctx.moveTo(rootX - 3, rootY - 50);
-      ctx.lineTo(rootX + 3, rootY - 50);
-      ctx.lineTo(rootX + 5, rootY - 15);
-      ctx.lineTo(rootX, rootY - 8);
-      ctx.lineTo(rootX - 5, rootY - 15);
-      ctx.closePath();
-      ctx.fill();
-
-      // Tweed Arms & Hands
-      ctx.lineWidth = 10;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#78350f';
-
-      const shoulderY = rootY - 58;
-
-      ctx.beginPath();
-      switch (move) {
-        case 0: // Ear-Pull Shimmy
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 35, shoulderY - 30); ctx.lineTo(rootX - 22, shoulderY - 55);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 35, shoulderY - 30); ctx.lineTo(rootX + 22, shoulderY - 55);
-          break;
-        case 1: // Lapel Hip-Twist (Thumbs in jacket)
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 25, shoulderY + 25); ctx.lineTo(rootX - 12, shoulderY + 20);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 25, shoulderY + 25); ctx.lineTo(rootX + 12, shoulderY + 20);
-          break;
-        case 2: // Awkward Knee-Knock
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 45, shoulderY + 15); ctx.lineTo(rootX - 25, shoulderY + 40);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 45, shoulderY + 15); ctx.lineTo(rootX + 25, shoulderY + 40);
-          break;
-        case 3: // Church Hymn Wiggle
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 10, shoulderY + 25); ctx.lineTo(rootX, shoulderY + 22);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 10, shoulderY + 25); ctx.lineTo(rootX, shoulderY + 22);
-          break;
-        case 4: // Silly Chicken
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 45, shoulderY); ctx.lineTo(rootX - 20, shoulderY + 25);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 45, shoulderY); ctx.lineTo(rootX + 20, shoulderY + 25);
-          break;
-        case 5: // Disco Point & Pout
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 35, shoulderY + 25); ctx.lineTo(rootX - 40, shoulderY + 50);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 45, shoulderY - 35); ctx.lineTo(rootX + 70, shoulderY - 65);
-          break;
-        case 6: // Limbo Matrix
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 45, shoulderY - 20); ctx.lineTo(rootX - 60, shoulderY - 45);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 45, shoulderY - 20); ctx.lineTo(rootX + 60, shoulderY - 45);
-          break;
-        case 7: // Goofy Marching
-          ctx.moveTo(rootX - 20, shoulderY); ctx.lineTo(rootX - 45, shoulderY + 20); ctx.lineTo(rootX - 50, shoulderY + 45);
-          ctx.moveTo(rootX + 20, shoulderY); ctx.lineTo(rootX + 40, shoulderY - 15); ctx.lineTo(rootX + 20, shoulderY - 40);
-          break;
-      }
-      ctx.stroke();
-
-      // Head Tilt & Expression
-      const headTilt = Math.sin(bean.grooveBeat * 2) * 0.15;
-      const headX = rootX;
-      const headY = rootY - 95;
-
-      ctx.save();
-      ctx.translate(headX, headY);
-      ctx.rotate(headTilt);
-
-      // Bean Head (Skin)
-      ctx.fillStyle = '#fbcfe8';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 19, 25, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Big Ears
-      ctx.beginPath();
-      ctx.ellipse(-20, 2, 6, 9, 0, 0, Math.PI * 2);
-      ctx.ellipse(20, 2, 6, 9, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Dark Combed Hair
-      ctx.fillStyle = '#1e1b4b';
-      ctx.beginPath();
-      ctx.arc(0, -9, 20, Math.PI, 0);
-      ctx.fill();
-
-      // Big Goofy Eyes
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(-7, -2, 6.5, 0, Math.PI * 2);
-      ctx.arc(7, -2, 6.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Pupils looking around comically
-      const pupilShift = Math.sin(bean.grooveBeat * 3) * 2;
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.arc(-7 + pupilShift, -2, 2.5, 0, Math.PI * 2);
-      ctx.arc(7 + pupilShift, -2, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Characteristic Arched Eyebrows
-      ctx.strokeStyle = '#1e1b4b';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-13, -11); ctx.quadraticCurveTo(-7, -16, -2, -10);
-      ctx.moveTo(2, -10); ctx.quadraticCurveTo(7, -16, 13, -11);
-      ctx.stroke();
-
-      // Pointy Nose & Smug Grin
-      ctx.beginPath();
-      ctx.moveTo(0, -2); ctx.lineTo(3, 8); ctx.lineTo(-1, 8);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(1, 14, 5, 0.2, Math.PI - 0.2);
-      ctx.stroke();
-
-      ctx.restore();
     }
 
     function showGameCanvas(show) {
