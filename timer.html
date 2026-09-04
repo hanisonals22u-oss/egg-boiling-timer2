@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spidey Kaiju Egg Timer & Battle Arena</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: #0f131d;
+      --spidey-red: #e11d48;
+      --spidey-blue: #2563eb;
+      --white: #f8fafc;
+      --gray: #64748b;
+      --border: #1e2536;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .dashboard-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 36px;
+      padding: 2.8rem;
+      width: 100%;
+      max-width: 1060px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3.5rem;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(225, 29, 72, 0.14);
+    }
+
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 320px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.3rem;
+      background: linear-gradient(135deg, #f43f5e 0%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--gray);
+      margin-bottom: 1.8rem;
+    }
+
+    .time-readout {
+      font-size: 4.8rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 1.6rem;
+      color: var(--white);
+      letter-spacing: -1.5px;
+      line-height: 1;
+    }
+
+    .presets-row {
+      display: flex;
+      gap: 0.7rem;
+      width: 100%;
+      margin-bottom: 1.1rem;
+    }
+
+    .preset-btn {
+      flex: 1;
+      background: #0c0e17;
+      border: 1px solid var(--border);
+      color: var(--white);
+      border-radius: 12px;
+      padding: 0.85rem 0;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--spidey-red);
+      color: var(--spidey-red);
+    }
+
+    .custom-inputs {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #0c0e17;
+      border: 1px solid var(--border);
+      padding: 0.75rem 1.1rem;
+      border-radius: 14px;
+      width: 100%;
+      margin-bottom: 1.8rem;
+    }
+
+    .custom-inputs input {
+      width: 65px;
+      background: #141926;
+      border: 1px solid #232d42;
+      border-radius: 8px;
+      padding: 0.45rem;
+      color: var(--white);
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .set-custom-btn {
+      background: var(--spidey-blue);
+      border: none;
+      color: var(--white);
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-left: auto;
+      transition: opacity 0.2s;
+    }
+
+    .set-custom-btn:hover {
+      opacity: 0.9;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 1.05rem;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary { 
+      background: linear-gradient(135deg, var(--spidey-red) 0%, #b91c1c 100%); 
+      color: #fff; 
+    }
+    .btn-secondary { background: #1c2333; color: var(--white); }
+
+    .right-panel {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-hud-bar {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #090c14;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.65rem 1.4rem;
+      margin-bottom: 1.2rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .stage-wrapper {
+      position: relative;
+      width: 420px;
+      height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    svg.progress-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    circle {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+    }
+
+    .circle-bg {
+      stroke: #161c2b;
+    }
+
+    .circle-progress {
+      stroke: var(--spidey-red);
+      stroke-dasharray: 1218.94;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.3s ease;
+    }
+
+    .stage-viewport {
+      width: 388px;
+      height: 388px;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      background: radial-gradient(circle, #191426 0%, #070910 100%);
+      border: 2px solid #2d1b33;
+      box-shadow: inset 0 0 45px rgba(0,0,0,0.95);
+      cursor: crosshair;
+    }
+
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      z-index: 4;
+    }
+
+    .actor-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .svg-actor {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Normal White Egg */
+    #eggActor svg {
+      width: 155px;
+      height: 200px;
+      filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.6));
+    }
+
+    #henActor {
+      opacity: 0;
+      transform: scale(0.2);
+    }
+
+    #henActor svg {
+      width: 180px;
+      height: 190px;
+      filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.5));
+    }
+
+    .thruster-flame {
+      opacity: 0;
+      transform-origin: top center;
+    }
+
+    .ignited .thruster-flame {
+      opacity: 1;
+      animation: flame-pulse 0.15s infinite alternate;
+    }
+
+    @keyframes flame-pulse {
+      0% { transform: scale(0.9); }
+      100% { transform: scale(1.2) translateY(4px); }
+    }
+
+    .blastoff {
+      animation: launch-skyward 1.1s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    }
+
+    @keyframes launch-skyward {
+      0% { transform: translateY(0) scale(1.1); }
+      30% { transform: translateY(18px) scale(1.2, 0.9); }
+      100% { transform: translateY(-700px) scale(0.5); opacity: 0; }
+    }
+
+    #friedActor {
+      opacity: 0;
+      transform: translateY(-350px) scale(0.4);
+    }
+
+    #friedActor svg {
+      width: 170px;
+      height: 130px;
+      filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.65));
+    }
+
+    #friedActor.landed {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    #monsterActor {
+      position: absolute;
+      bottom: -310px;
+      width: 270px;
+      height: 270px;
+      z-index: 6;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+
+    #monsterActor svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 -10px 30px rgba(0, 0, 0, 0.85));
+    }
+
+    #monsterActor.appear {
+      transform: translateY(-205px);
+    }
+
+    .jaw {
+      transform-origin: 135px 170px;
+      transition: transform 0.2s ease;
+    }
+
+    .chomp .jaw {
+      transform: translateY(-26px);
+    }
+
+    @media (max-width: 960px) {
+      .dashboard-container {
+        flex-direction: column;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .left-panel {
+        align-items: center;
+        text-align: center;
+        width: 100%;
+      }
+      .stage-wrapper {
+        width: 330px;
+        height: 330px;
+      }
+      .stage-viewport {
+        width: 300px;
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- Left Column: Controls & Presets -->
+    <div class="left-panel">
+      <h1>Spidey Kaiju Timer</h1>
+      <p class="subtitle">Fire webs in the arena while your timer counts down</p>
+
+      <div class="time-readout" id="display">00:15</div>
+
+      <div class="presets-row">
+        <button class="preset-btn" data-seconds="15">15s Demo</button>
+        <button class="preset-btn" data-seconds="60">1 Min</button>
+        <button class="preset-btn" data-seconds="180">3 Min</button>
+      </div>
+
+      <div class="custom-inputs">
+        <input type="number" id="customMin" min="0" max="999" placeholder="0" />
+        <span>m</span>
+        <input type="number" id="customSec" min="0" max="59" placeholder="0" />
+        <span>s</span>
+        <button class="set-custom-btn" id="applyCustomBtn">Set Custom</button>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-secondary" id="resetBtn">Reset</button>
+        <button class="btn btn-primary" id="startBtn">Start</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Big Circle Battle Arena -->
+    <div class="right-panel">
+      <div class="game-hud-bar" id="gameHud">
+        <span>SNAGGED: <strong id="hudScore" style="color: #38bdf8;">0</strong></span>
+        <span>SHIELD: <strong id="hudLives" style="color: var(--spidey-red);">🕸🕸🕸</strong></span>
+      </div>
+
+      <div class="stage-wrapper">
+        <svg class="progress-ring">
+          <circle class="circle-bg" cx="210" cy="210" r="194"></circle>
+          <circle class="circle-progress" id="progressCircle" cx="210" cy="210" r="194"></circle>
+        </svg>
+
+        <div class="stage-viewport" id="stageViewport">
+          <canvas id="gameCanvas" width="388" height="388"></canvas>
+
+          <div class="actor-container" id="actorContainer">
+            <!-- Normal White Egg -->
+            <div class="svg-actor" id="eggActor">
+              <svg viewBox="0 0 100 130">
+                <defs>
+                  <linearGradient id="normalEggGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="65%" stop-color="#f1f5f9"/>
+                    <stop offset="100%" stop-color="#cbd5e1"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 50 5 C 20 5, 5 45, 5 80 C 5 110, 25 125, 50 125 C 75 125, 95 110, 95 80 C 95 45, 80 5, 50 5 Z" fill="url(#normalEggGrad)"/>
+                <path d="M 28 25 C 38 12, 55 12, 60 18" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.85"/>
+              </svg>
+            </div>
+
+            <!-- Chick with Rocket -->
+            <div class="svg-actor" id="henActor">
+              <svg viewBox="0 0 140 140">
+                <g id="rocketPack" transform="translate(90, 30)">
+                  <rect x="0" y="15" width="22" height="50" rx="10" fill="#2563eb"/>
+                  <polygon points="11,-2 -3,15 25,15" fill="#1d4ed8"/>
+                  <g class="thruster-flame">
+                    <polygon points="3,65 11,85 19,65" fill="#38bdf8"/>
+                    <polygon points="6,65 11,78 16,65" fill="#e11d48"/>
+                  </g>
+                </g>
+                <g transform="translate(15, 20)">
+                  <ellipse cx="45" cy="55" rx="35" ry="35" fill="#facc15"/>
+                  <path d="M 20 55 C 20 70, 35 75, 42 65" fill="#eab308"/>
+                  <polygon points="65,48 82,54 65,60" fill="#ea580c"/>
+                  <circle cx="54" cy="45" r="7" fill="#000"/>
+                  <circle cx="56" cy="43" r="2.5" fill="#fff"/>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Drumstick -->
+            <div class="svg-actor" id="friedActor">
+              <svg viewBox="0 0 120 90">
+                <defs>
+                  <linearGradient id="crustGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#d97706"/>
+                    <stop offset="60%" stop-color="#b45309"/>
+                    <stop offset="100%" stop-color="#78350f"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 80 40 L 105 32" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="106" cy="28" r="6" fill="#f8fafc"/>
+                <circle cx="110" cy="36" r="6" fill="#f8fafc"/>
+                <ellipse cx="48" cy="45" rx="40" ry="28" fill="url(#crustGrad)"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Monster -->
+          <div id="monsterActor">
+            <svg viewBox="0 0 150 150">
+              <defs>
+                <linearGradient id="kaijuSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#1e1b4b"/>
+                  <stop offset="100%" stop-color="#090a10"/>
+                </linearGradient>
+              </defs>
+              <path d="M 20 80 Q -10 50 15 20" stroke="#e11d48" stroke-width="5" fill="none"/>
+              <path d="M 130 80 Q 160 50 135 20" stroke="#e11d48" stroke-width="5" fill="none"/>
+              <path d="M 25 100 Q -10 90 10 60" stroke="#e11d48" stroke-width="5" fill="none"/>
+              <path d="M 125 100 Q 160 90 140 60" stroke="#e11d48" stroke-width="5" fill="none"/>
+
+              <path d="M 25 150 C 25 35, 125 35, 125 150 Z" fill="url(#kaijuSkin)" stroke="#e11d48" stroke-width="2"/>
+
+              <circle cx="45" cy="60" r="6" fill="#e11d48"/>
+              <circle cx="60" cy="55" r="7" fill="#38bdf8"/>
+              <circle cx="90" cy="55" r="7" fill="#38bdf8"/>
+              <circle cx="105" cy="60" r="6" fill="#e11d48"/>
+
+              <g class="jaw" id="monsterJaw">
+                <path d="M 45 92 Q 75 118 105 92 Z" fill="#881337"/>
+                <polygon points="50,92 55,100 60,92" fill="#fff"/>
+                <polygon points="65,92 70,102 75,92" fill="#fff"/>
+                <polygon points="80,92 85,102 90,92" fill="#fff"/>
+                <polygon points="95,92 100,100 105,92" fill="#fff"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function playSfx(f1, f2, dur, type = 'sine') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(f1, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(f2, ctx.currentTime + dur);
+        gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + dur);
+      } catch (e) {}
+    }
+
+    const radius = 194;
+    const circumference = 2 * Math.PI * radius;
+    const circle = document.getElementById('progressCircle');
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+
+    let totalSeconds = 15;
+    let remainingSeconds = 15;
+    let timerInterval = null;
+    let isRunning = false;
+
+    const display = document.getElementById('display');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const presetButtons = document.querySelectorAll('.preset-btn');
+    const customMin = document.getElementById('customMin');
+    const customSec = document.getElementById('customSec');
+    const applyCustomBtn = document.getElementById('applyCustomBtn');
+
+    const actorContainer = document.getElementById('actorContainer');
+    const eggActor = document.getElementById('eggActor');
+    const henActor = document.getElementById('henActor');
+    const friedActor = document.getElementById('friedActor');
+    const monsterActor = document.getElementById('monsterActor');
+    const monsterJaw = document.getElementById('monsterJaw');
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const hudScore = document.getElementById('hudScore');
+    const hudLives = document.getElementById('hudLives');
+
+    let gameActive = false;
+    let animationFrameId = null;
+    let score = 0;
+    let lives = 3;
+    let crosshair = { x: 194, y: 194 };
+    let webLines = [];
+    let targets = [];
+    let spawnTimer = 0;
+
+    function resetArcadeState() {
+      score = 0;
+      lives = 3;
+      targets = [];
+      webLines = [];
+      spawnTimer = 0;
+      hudScore.textContent = score;
+      hudLives.textContent = '🕸🕸🕸';
+    }
+
+    function spawnTarget() {
+      const isBomb = Math.random() < 0.35;
+      targets.push({
+        x: Math.random() * (canvas.width - 80) + 40,
+        y: -15,
+        radius: isBomb ? 15 : 13,
+        speed: 1.8 + Math.random() * 2.0,
+        type: isBomb ? 'bomb' : 'egg'
+      });
+    }
+
+    function shootWeb(clickX, clickY) {
+      if (!gameActive) return;
+      playSfx(800, 200, 0.1, 'triangle');
+
+      webLines.push({
+        fromX: 194,
+        fromY: 388,
+        toX: clickX,
+        toY: clickY,
+        life: 12
+      });
+
+      for (let i = targets.length - 1; i >= 0; i--) {
+        const t = targets[i];
+        const dist = Math.hypot(t.x - clickX, t.y - clickY);
+
+        if (dist <= t.radius + 20) {
+          if (t.type === 'egg') {
+            score += 10;
+            hudScore.textContent = score;
+            playSfx(550, 950, 0.15, 'sine');
+          } else {
+            lives--;
+            hudLives.textContent = '🕸'.repeat(Math.max(0, lives));
+            playSfx(140, 60, 0.25, 'sawtooth');
+            if (lives <= 0) {
+              lives = 3;
+              hudLives.textContent = '🕸🕸🕸';
+            }
+          }
+          targets.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      crosshair.x = e.clientX - rect.left;
+      crosshair.y = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      shootWeb(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        const rect = canvas.getBoundingClientRect();
+        shootWeb(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+      }
+    }, { passive: true });
+
+    function updateGame() {
+      if (!gameActive) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(194, 194, 80, 0, Math.PI * 2);
+      ctx.arc(194, 194, 150, 0, Math.PI * 2);
+      ctx.stroke();
+
+      spawnTimer++;
+      if (spawnTimer % 28 === 0) spawnTarget();
+
+      for (let i = webLines.length - 1; i >= 0; i--) {
+        const line = webLines[i];
+        ctx.strokeStyle = `rgba(255, 255, 255, ${line.life / 12})`;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(line.fromX, line.fromY);
+        ctx.lineTo(line.toX, line.toY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(line.toX, line.toY, 9, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${line.life / 12})`;
+        ctx.fill();
+
+        line.life--;
+        if (line.life <= 0) webLines.splice(i, 1);
+      }
+
+      for (let i = targets.length - 1; i >= 0; i--) {
+        const item = targets[i];
+        item.y += item.speed;
+
+        if (item.type === 'egg') {
+          // Normal Golden/White Egg
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath();
+          ctx.ellipse(item.x, item.y, item.radius * 0.8, item.radius, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.stroke();
+        } else {
+          // Pumpkin Bomb
+          ctx.fillStyle = '#ea580c';
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(item.x - 5, item.y - 4, 3, 3);
+          ctx.fillRect(item.x + 2, item.y - 4, 3, 3);
+        }
+
+        if (item.y > canvas.height + 25) targets.splice(i, 1);
+      }
+
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(crosshair.x, crosshair.y, 12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      animationFrameId = requestAnimationFrame(updateGame);
+    }
+
+    function showArcadeGame(show) {
+      gameActive = show;
+      canvas.style.display = show ? 'block' : 'none';
+      actorContainer.style.display = show ? 'none' : 'flex';
+
+      if (show) {
+        updateGame();
+      } else if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    }
+
+    function updateDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+      const progressFraction = totalSeconds > 0 ? (remainingSeconds / totalSeconds) : 0;
+      circle.style.strokeDashoffset = circumference - (progressFraction * circumference);
+    }
+
+    function runFinaleSequence() {
+      showArcadeGame(false);
+
+      eggActor.style.opacity = '0';
+      henActor.style.opacity = '1';
+      henActor.style.transform = 'scale(0.85)';
+
+      setTimeout(() => {
+        henActor.style.transform = 'scale(1.25)';
+        playSfx(400, 600, 0.25, 'triangle');
+      }, 500);
+
+      setTimeout(() => {
+        henActor.classList.add('ignited');
+        playSfx(200, 800, 1.1, 'sawtooth');
+      }, 1000);
+
+      setTimeout(() => {
+        henActor.classList.add('blastoff');
+      }, 1400);
+
+      setTimeout(() => {
+        henActor.style.display = 'none';
+        friedActor.classList.add('landed');
+        playSfx(480, 220, 0.35, 'sine');
+      }, 2500);
+
+      setTimeout(() => {
+        monsterActor.classList.add('appear');
+        playSfx(80, 140, 0.45, 'triangle');
+      }, 3100);
+
+      setTimeout(() => {
+        monsterJaw.classList.add('chomp');
+        friedActor.style.opacity = '0';
+        playSfx(200, 70, 0.3, 'square');
+      }, 3800);
+
+      // Monster leaves and resets cleanly
+      setTimeout(() => {
+        monsterJaw.classList.remove('chomp');
+        monsterActor.classList.remove('appear');
+      }, 4600);
+
+      setTimeout(() => {
+        resetVisuals();
+      }, 5200);
+    }
+
+    function resetVisuals() {
+      showArcadeGame(false);
+      resetArcadeState();
+
+      henActor.classList.remove('ignited', 'blastoff');
+      henActor.style.display = 'flex';
+      henActor.style.opacity = '0';
+      henActor.style.transform = 'scale(0.2)';
+      eggActor.style.opacity = '1';
+      friedActor.classList.remove('landed');
+      friedActor.style.opacity = '0';
+      monsterActor.classList.remove('appear');
+      monsterJaw.classList.remove('chomp');
+    }
+
+    function startTimer() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+        startBtn.textContent = 'Resume';
+        showArcadeGame(false);
+        return;
+      }
+
+      if (remainingSeconds <= 0) {
+        remainingSeconds = totalSeconds;
+        resetVisuals();
+      }
+
+      isRunning = true;
+      startBtn.textContent = 'Pause';
+      showArcadeGame(true);
+
+      timerInterval = setInterval(() => {
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
+          updateDisplay();
+        } else {
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.textContent = 'Start';
+          runFinaleSequence();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      remainingSeconds = totalSeconds;
+      startBtn.textContent = 'Start';
+      resetVisuals();
+      updateDisplay();
+    }
+
+    presetButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        totalSeconds = parseInt(btn.getAttribute('data-seconds'), 10);
+        resetTimer();
+      });
+    });
+
+    applyCustomBtn.addEventListener('click', () => {
+      const mins = parseInt(customMin.value, 10) || 0;
+      const secs = parseInt(customSec.value, 10) || 0;
+      const total = mins * 60 + secs;
+
+      if (total > 0) {
+        totalSeconds = total;
+        resetTimer();
+      } else {
+        alert('Please enter a duration greater than 0 seconds.');
+      }
+    });
+
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    updateDisplay();
+  </script>
+</body>
+</html>
