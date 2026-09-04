@@ -1,9 +1,9 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monster Rocket Egg Timer</title>
+  <title>Kaiju Egg Timer</title>
   <style>
     :root {
       --bg: #0b0d13;
@@ -14,7 +14,6 @@
       --border: #232938;
       --rocket-red: #ef4444;
       --monster-green: #22c55e;
-      --monster-dark: #15803d;
     }
 
     * {
@@ -39,9 +38,9 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 28px;
-      padding: 2.2rem;
+      padding: 2rem;
       width: 100%;
-      max-width: 440px;
+      max-width: 420px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -52,14 +51,14 @@
     h1 {
       font-size: 1.6rem;
       font-weight: 700;
-      letter-spacing: -0.5px;
       margin-bottom: 0.2rem;
+      letter-spacing: -0.5px;
     }
 
     .subtitle {
       font-size: 0.85rem;
       color: var(--gray);
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
 
     /* Animation Stage */
@@ -70,8 +69,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1.25rem;
-      overflow: visible;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      border-radius: 50%;
     }
 
     svg.progress-ring {
@@ -101,7 +101,6 @@
       transition: stroke-dashoffset 0.3s ease;
     }
 
-    /* Actor Container */
     .actor-container {
       position: relative;
       width: 120px;
@@ -129,7 +128,7 @@
     }
 
     .ticking .egg-wrapper {
-      animation: wobble 1s infinite alternate ease-in-out;
+      animation: wobble 0.8s infinite alternate ease-in-out;
     }
 
     @keyframes wobble {
@@ -137,7 +136,7 @@
       100% { transform: rotate(5deg); }
     }
 
-    /* Hen / Bird */
+    /* Chick / Hen */
     .bird {
       position: absolute;
       display: flex;
@@ -203,12 +202,12 @@
     /* Rocket */
     .rocket {
       position: absolute;
-      width: 26px;
-      height: 70px;
+      width: 24px;
+      height: 64px;
       background: var(--rocket-red);
       border-radius: 12px 12px 4px 4px;
-      right: -24px;
-      top: -5px;
+      right: -22px;
+      top: -2px;
       opacity: 0;
       transform: scale(0.6);
       transition: opacity 0.3s ease;
@@ -219,15 +218,15 @@
       top: -10px;
       width: 0;
       height: 0;
-      border-left: 13px solid transparent;
-      border-right: 13px solid transparent;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
       border-bottom: 12px solid #b91c1c;
     }
 
     .exhaust-flame {
       position: absolute;
-      bottom: -18px;
-      left: 5px;
+      bottom: -16px;
+      left: 4px;
       width: 16px;
       height: 18px;
       background: radial-gradient(circle, #facc15 20%, #ea580c 80%);
@@ -241,17 +240,17 @@
 
     @keyframes rocket-launch {
       0% { transform: translateY(0); }
-      100% { transform: translateY(-750px) scale(1.3); }
+      100% { transform: translateY(-350px) scale(1.2); }
     }
 
-    /* Fried Drumstick Platter */
+    /* Drumstick */
     .fried-chicken {
       position: absolute;
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transform: translateY(-400px) scale(0.2);
+      transform: translateY(-250px) scale(0.2);
       transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
       z-index: 5;
     }
@@ -262,44 +261,32 @@
     }
 
     .drumstick {
-      width: 70px;
-      height: 48px;
+      width: 60px;
+      height: 42px;
       background: #b45309;
       border-radius: 40px 20px 20px 40px;
       position: relative;
-      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.25);
     }
 
     .drumstick-bone {
       position: absolute;
-      right: -24px;
-      top: 17px;
-      width: 26px;
-      height: 14px;
+      right: -20px;
+      top: 15px;
+      width: 22px;
+      height: 12px;
       background: #fff;
       border-radius: 4px;
     }
 
-    .drumstick-knob {
-      position: absolute;
-      right: -32px;
-      top: 13px;
-      width: 14px;
-      height: 22px;
-      background: #fff;
-      border-radius: 50%;
-    }
-
-    /* Giant Monster */
+    /* Monster */
     .monster {
       position: absolute;
-      bottom: -180px;
-      width: 180px;
-      height: 170px;
+      bottom: -220px;
+      width: 160px;
+      height: 160px;
       background: var(--monster-green);
-      border-radius: 90px 90px 20px 20px;
+      border-radius: 80px 80px 20px 20px;
       border: 4px solid #14532d;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -309,14 +296,14 @@
     }
 
     .monster.appear {
-      transform: translateY(-160px);
+      transform: translateY(-130px);
     }
 
     .monster-eye {
       position: absolute;
-      top: 30px;
-      width: 24px;
-      height: 24px;
+      top: 25px;
+      width: 20px;
+      height: 20px;
       background: #fff;
       border: 2px solid #000;
       border-radius: 50%;
@@ -325,23 +312,23 @@
       justify-content: center;
     }
 
-    .monster-eye.left { left: 45px; }
-    .monster-eye.right { right: 45px; }
+    .monster-eye.left { left: 40px; }
+    .monster-eye.right { right: 40px; }
 
     .monster-pupil {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       background: #000;
       border-radius: 50%;
     }
 
     .monster-mouth {
       position: absolute;
-      bottom: 25px;
-      width: 70px;
-      height: 35px;
+      bottom: 22px;
+      width: 60px;
+      height: 30px;
       background: #7f1d1d;
-      border-radius: 0 0 40px 40px;
+      border-radius: 0 0 35px 35px;
       overflow: hidden;
       border: 3px solid #14532d;
       transition: all 0.3s ease;
@@ -355,25 +342,26 @@
     .monster-teeth {
       position: absolute;
       top: 0;
-      left: 10px;
-      width: 50px;
-      height: 10px;
-      background: repeating-linear-gradient(90deg, #fff 0px, #fff 10px, transparent 10px, transparent 15px);
+      left: 6px;
+      width: 48px;
+      height: 8px;
+      background: repeating-linear-gradient(90deg, #fff 0px, #fff 8px, transparent 8px, transparent 12px);
     }
 
-    /* Controls UI */
+    /* Display Readout */
     .time-readout {
-      font-size: 3rem;
+      font-size: 2.8rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
 
     .presets-row {
       display: flex;
-      gap: 0.6rem;
+      gap: 0.5rem;
       width: 100%;
-      margin-bottom: 1rem;
+      margin-bottom: 0.85rem;
+      z-index: 20;
     }
 
     .preset-btn {
@@ -381,11 +369,10 @@
       background: #0c0f16;
       border: 1px solid var(--border);
       color: var(--white);
-      border-radius: 12px;
-      padding: 0.65rem 0;
+      border-radius: 10px;
+      padding: 0.6rem 0;
       font-weight: 600;
       cursor: pointer;
-      transition: border-color 0.2s;
     }
 
     .preset-btn:hover {
@@ -396,24 +383,25 @@
     .custom-inputs {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       background: #0c0f16;
       border: 1px solid var(--border);
-      padding: 0.65rem 1rem;
+      padding: 0.6rem 0.8rem;
       border-radius: 12px;
       width: 100%;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.2rem;
+      z-index: 20;
     }
 
     .custom-inputs input {
-      width: 52px;
+      width: 50px;
       background: #151922;
       border: 1px solid #283144;
       border-radius: 8px;
       padding: 0.35rem;
       color: var(--white);
       text-align: center;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       outline: none;
     }
@@ -422,7 +410,7 @@
       background: #232c3f;
       border: none;
       color: var(--white);
-      padding: 0.45rem 0.8rem;
+      padding: 0.4rem 0.75rem;
       border-radius: 8px;
       font-weight: 700;
       font-size: 0.8rem;
@@ -434,6 +422,7 @@
       display: flex;
       gap: 0.75rem;
       width: 100%;
+      z-index: 20;
     }
 
     .btn {
@@ -444,7 +433,6 @@
       font-weight: 700;
       cursor: pointer;
       border: none;
-      transition: opacity 0.2s;
     }
 
     .btn-primary { background: var(--accent); color: #000; }
@@ -457,7 +445,6 @@
     <h1>Kaiju Egg Timer</h1>
     <p class="subtitle">Countdown to a monster snack</p>
 
-    <!-- Animation Stage -->
     <div class="stage" id="stage">
       <svg class="progress-ring">
         <circle class="circle-bg" cx="110" cy="110" r="90"></circle>
@@ -465,12 +452,10 @@
       </svg>
 
       <div class="actor-container" id="actor">
-        <!-- 1. Egg -->
         <div class="egg-wrapper" id="egg">
           <div class="egg-shell"></div>
         </div>
 
-        <!-- 2. Hen -->
         <div class="bird" id="bird">
           <div class="comb" id="comb"></div>
           <div class="bird-body">
@@ -480,23 +465,19 @@
             <div class="wing left"></div>
             <div class="wing right"></div>
           </div>
-          <!-- Rocket -->
           <div class="rocket" id="rocket">
             <div class="rocket-tip"></div>
             <div class="exhaust-flame" id="flame"></div>
           </div>
         </div>
 
-        <!-- 3. Crispy Drumstick -->
         <div class="fried-chicken" id="friedChicken">
           <div class="drumstick">
             <div class="drumstick-bone"></div>
-            <div class="drumstick-knob"></div>
           </div>
         </div>
       </div>
 
-      <!-- 4. Monster Pop-up -->
       <div class="monster" id="monster">
         <div class="monster-eye left"><div class="monster-pupil"></div></div>
         <div class="monster-eye right"><div class="monster-pupil"></div></div>
@@ -506,17 +487,14 @@
       </div>
     </div>
 
-    <!-- Countdown Readout -->
-    <div class="time-readout" id="display">01:00</div>
+    <div class="time-readout" id="display">00:05</div>
 
-    <!-- Presets -->
     <div class="presets-row">
       <button class="preset-btn" data-seconds="5">5s (Demo)</button>
       <button class="preset-btn" data-seconds="60">1 Min</button>
       <button class="preset-btn" data-seconds="180">3 Min</button>
     </div>
 
-    <!-- Custom Inputs -->
     <div class="custom-inputs">
       <input type="number" id="customMin" min="0" max="999" placeholder="0" />
       <span>m</span>
@@ -525,7 +503,6 @@
       <button class="set-custom-btn" id="applyCustomBtn">Set</button>
     </div>
 
-    <!-- Controls -->
     <div class="controls">
       <button class="btn btn-secondary" id="resetBtn">Reset</button>
       <button class="btn btn-primary" id="startBtn">Start</button>
@@ -538,8 +515,8 @@
     const circumference = 2 * Math.PI * radius;
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
 
-    let totalSeconds = 60;
-    let remainingSeconds = 60;
+    let totalSeconds = 5;
+    let remainingSeconds = 5;
     let timerInterval = null;
     let isRunning = false;
 
@@ -551,7 +528,6 @@
     const customSec = document.getElementById('customSec');
     const applyCustomBtn = document.getElementById('applyCustomBtn');
 
-    // Actors
     const stage = document.getElementById('stage');
     const actor = document.getElementById('actor');
     const egg = document.getElementById('egg');
@@ -572,16 +548,17 @@
       circle.style.strokeDashoffset = circumference - (progressFraction * circumference);
     }
 
-    // Cartoon Sound Synthesizer
     function playAudioTone(freqStart, freqEnd, duration, type = 'sine') {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freqStart, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(freqEnd, ctx.currentTime + duration);
-        gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -591,53 +568,46 @@
     }
 
     function runFinaleAnimation() {
-      // 1. Hatch baby chick
       egg.style.opacity = '0';
       bird.style.opacity = '1';
       bird.style.transform = 'scale(0.6)';
 
-      // 2. Grow into hen
       setTimeout(() => {
         bird.style.transform = 'scale(1.1)';
         comb.style.opacity = '1';
-      }, 600);
+      }, 500);
 
-      // 3. Strap on rocket & launch
       setTimeout(() => {
         rocket.style.opacity = '1';
         flame.style.opacity = '1';
         playAudioTone(150, 700, 1.2, 'sawtooth');
-      }, 1200);
+      }, 1000);
 
       setTimeout(() => {
         actor.classList.add('blastoff');
-      }, 1700);
+      }, 1500);
 
-      // 4. Return as roasted fried chicken
       setTimeout(() => {
         bird.style.display = 'none';
         actor.classList.remove('blastoff');
         friedChicken.classList.add('landed');
         playAudioTone(500, 200, 0.4, 'sine');
-      }, 2900);
+      }, 2600);
 
-      // 5. Giant Monster emerges from below
       setTimeout(() => {
         monster.classList.add('appear');
-        playAudioTone(80, 140, 0.5, 'triangle');
-      }, 3600);
+        playAudioTone(90, 150, 0.4, 'triangle');
+      }, 3200);
 
-      // 6. Monster CHOMPS the drumstick
       setTimeout(() => {
         monsterMouth.classList.add('chomp');
         friedChicken.style.opacity = '0';
         playAudioTone(220, 80, 0.3, 'square');
-      }, 4300);
+      }, 3900);
 
-      // 7. Monster smiles & finishes
       setTimeout(() => {
         monsterMouth.classList.remove('chomp');
-      }, 4900);
+      }, 4500);
     }
 
     function resetVisuals() {
@@ -665,7 +635,10 @@
         return;
       }
 
-      if (remainingSeconds <= 0) return;
+      if (remainingSeconds <= 0) {
+        remainingSeconds = totalSeconds;
+        resetVisuals();
+      }
 
       isRunning = true;
       startBtn.textContent = 'Pause';
@@ -718,3 +691,6 @@
     resetBtn.addEventListener('click', resetTimer);
 
     updateDisplay();
+  </script>
+</body>
+</html>
