@@ -13,7 +13,6 @@
       --white: #f8fafc;
       --gray: #64748b;
       --border: #1e2536;
-      --timepass: #f59e0b;
     }
 
     * {
@@ -40,7 +39,7 @@
       border-radius: 32px;
       padding: 2.5rem;
       width: 100%;
-      max-width: 1120px;
+      max-width: 1140px;
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -70,52 +69,14 @@
     .subtitle {
       font-size: 0.9rem;
       color: var(--gray);
-      margin-bottom: 1.2rem;
-    }
-
-    .timer-type-selector {
-      display: flex;
-      gap: 0.5rem;
-      width: 100%;
-      background: #090c14;
-      border: 1px solid var(--border);
-      padding: 0.35rem;
-      border-radius: 14px;
-      margin-bottom: 1.2rem;
-    }
-
-    .type-btn {
-      flex: 1;
-      padding: 0.65rem 0;
-      background: transparent;
-      border: none;
-      border-radius: 10px;
-      color: var(--gray);
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .type-btn.active {
-      background: #1e293b;
-      color: #38bdf8;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-    }
-
-    .type-btn.timepass-active {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+      margin-bottom: 1.6rem;
     }
 
     .time-readout {
-      font-size: 4.8rem;
+      font-size: 5rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.4rem;
       color: var(--white);
       letter-spacing: -1.5px;
       line-height: 1;
@@ -156,7 +117,7 @@
       padding: 0.75rem 1.1rem;
       border-radius: 14px;
       width: 100%;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.4rem;
     }
 
     .custom-inputs input {
@@ -187,19 +148,6 @@
 
     .set-custom-btn:hover {
       background: #334155;
-    }
-
-    .timepass-info-box {
-      display: none;
-      width: 100%;
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px dashed rgba(245, 158, 11, 0.35);
-      border-radius: 14px;
-      padding: 0.9rem 1.1rem;
-      margin-bottom: 1.2rem;
-      font-size: 0.85rem;
-      color: #fbbf24;
-      line-height: 1.4;
     }
 
     .clap-trigger-bar {
@@ -283,7 +231,6 @@
       background: #252f44;
     }
 
-    /* Right Panel */
     .right-panel {
       flex-shrink: 0;
       display: flex;
@@ -292,24 +239,23 @@
       justify-content: center;
     }
 
-    /* 4-Game Mode Selector Grid */
     .game-selector-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.45rem;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.4rem;
       width: 100%;
       max-width: 460px;
       margin-bottom: 0.8rem;
     }
 
     .mode-btn {
-      padding: 0.6rem 0.3rem;
+      padding: 0.6rem 0.2rem;
       background: #0a0d16;
       border: 1px solid var(--border);
       border-radius: 10px;
       color: var(--gray);
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       cursor: pointer;
       transition: all 0.2s;
       white-space: nowrap;
@@ -483,12 +429,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Set your duration and clap to start</p>
-
-      <div class="timer-type-selector">
-        <button class="type-btn active" id="tabEggTimer">🥚 Egg Boil Timer</button>
-        <button class="type-btn" id="tabTimePass">🎮 Time Pass (Endless)</button>
-      </div>
+      <p class="subtitle">Set your duration and clap to start or bust new dance moves</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -504,10 +445,6 @@
         <input type="number" id="customSec" min="0" max="59" placeholder="0" />
         <span>s</span>
         <button class="set-custom-btn" id="applyCustomBtn">Set</button>
-      </div>
-
-      <div class="timepass-info-box" id="timepassInfo">
-        Endless mode active. Switch through all 4 games or fidget with bubble wrap and squishy slime eggs!
       </div>
 
       <div class="clap-trigger-bar">
@@ -532,8 +469,9 @@
       <div class="game-selector-row">
         <button class="mode-btn active" id="modeCityBtn">🏙 City</button>
         <button class="mode-btn" id="modeCatchBtn">🍳 Catch</button>
-        <button class="mode-btn" id="modePopBtn">🫧 Bubble Pop</button>
-        <button class="mode-btn" id="modeSlimeBtn">🐣 Squishy</button>
+        <button class="mode-btn" id="modePopBtn">🫧 Pop</button>
+        <button class="mode-btn" id="modeSlimeBtn">🐣 Squish</button>
+        <button class="mode-btn" id="modeDanceBtn">🕺 Dance</button>
       </div>
 
       <div class="game-hud-bar">
@@ -637,11 +575,9 @@
 
     let totalSeconds = 15;
     let remainingSeconds = 15;
-    let timePassSeconds = 0;
-    let isTimePassMode = false;
     let timerInterval = null;
     let isRunning = false;
-    let selectedGame = 'city'; // 'city', 'catch', 'pop', 'slime'
+    let selectedGame = 'city';
 
     const display = document.getElementById('display');
     const resetBtn = document.getElementById('resetBtn');
@@ -651,12 +587,6 @@
     const applyCustomBtn = document.getElementById('applyCustomBtn');
     const progressBar = document.getElementById('progressBar');
 
-    const tabEggTimer = document.getElementById('tabEggTimer');
-    const tabTimePass = document.getElementById('tabTimePass');
-    const presetsRow = document.getElementById('presetsRow');
-    const customInputsRow = document.getElementById('customInputsRow');
-    const timepassInfo = document.getElementById('timepassInfo');
-
     const clapToggleBtn = document.getElementById('clapToggleBtn');
     const clapStatusText = document.getElementById('clapStatusText');
     const clapMeterFill = document.getElementById('clapMeterFill');
@@ -665,6 +595,7 @@
     const modeCatchBtn = document.getElementById('modeCatchBtn');
     const modePopBtn = document.getElementById('modePopBtn');
     const modeSlimeBtn = document.getElementById('modeSlimeBtn');
+    const modeDanceBtn = document.getElementById('modeDanceBtn');
 
     const hudScore = document.getElementById('hudScore');
     const hudSubLabel = document.getElementById('hudSubLabel');
@@ -686,20 +617,20 @@
     let isInteracting = false;
     let particles = [];
 
-    // Mode 1: City
+    // Game 1: City
     let buildings = [];
     let tanks = [];
 
-    // Mode 2: Catch
+    // Game 2: Catch
     let paddle = { x: 190, y: 410, w: 75, h: 14 };
     let fallingItems = [];
     let catchSpawnTimer = 0;
     let lives = 3;
 
-    // Mode 3: Bubble Pop
+    // Game 3: Bubble Pop
     let bubbles = [];
 
-    // Mode 4: Squishy Slime Egg
+    // Game 4: Slime
     let slime = {
       x: 230,
       y: 230,
@@ -709,6 +640,32 @@
       stretchX: 1,
       stretchY: 1,
       isHeld: false
+    };
+
+    // Game 5: Dancer with 12 steps
+    let dancer = {
+      moveIndex: 0,
+      grooveBeat: 0,
+      spotColor: '#38bdf8',
+      spotColors: [
+        '#38bdf8', '#f43f5e', '#a855f7', '#facc15', '#22c55e', '#ec4899',
+        '#06b6d4', '#e11d48', '#8b5cf6', '#10b981', '#f97316', '#3b82f6'
+      ],
+      moveNames: [
+        'Groove Bob',
+        'Saturday Night Fever',
+        'The Wave & Pop',
+        'Arm Cross Shuffle',
+        '360° Spin Jump',
+        'The Robot',
+        'Egyptian Walk',
+        'Windmill Flail',
+        'Low Matrix Lean',
+        'The Dab & Drop',
+        'Breakdance Freeze',
+        'Air Guitar Solo'
+      ],
+      clapsCount: 0
     };
 
     // Acoustic Clap Detector
@@ -732,7 +689,7 @@
         source.connect(clapAnalyser);
 
         isClapArmed = true;
-        clapStatusText.textContent = "Clap to Start / Pause";
+        clapStatusText.textContent = "Clap to Trigger";
         listenForClap();
       } catch (e) {
         clapStatusText.textContent = "Click to Enable Mic";
@@ -756,16 +713,21 @@
 
       if (volumePercent >= 70 && !clapCooldown) {
         clapCooldown = true;
-        playSfx(600, 1200, 0.1, 'sine');
 
         clapToggleBtn.style.transform = 'scale(1.15)';
         setTimeout(() => { clapToggleBtn.style.transform = 'scale(1)'; }, 200);
 
-        toggleTimerRunState();
+        if (!isRunning) startTimer();
+
+        if (selectedGame === 'dance') {
+          triggerDancerMove();
+        } else {
+          toggleTimerRunState();
+        }
 
         setTimeout(() => {
           clapCooldown = false;
-        }, 1000);
+        }, 350);
       }
 
       requestAnimationFrame(listenForClap);
@@ -776,30 +738,9 @@
       if (!isClapArmed) initClapListener();
     }, { once: true });
 
-    function setTimerType(type) {
-      isTimePassMode = (type === 'timepass');
-      tabEggTimer.classList.toggle('active', !isTimePassMode);
-      tabTimePass.classList.toggle('timepass-active', isTimePassMode);
-
-      if (isTimePassMode) {
-        presetsRow.style.display = 'none';
-        customInputsRow.style.display = 'none';
-        timepassInfo.style.display = 'block';
-      } else {
-        presetsRow.style.display = 'flex';
-        customInputsRow.style.display = 'flex';
-        timepassInfo.style.display = 'none';
-      }
-
-      resetTimer();
-    }
-
-    tabEggTimer.addEventListener('click', () => setTimerType('egg'));
-    tabTimePass.addEventListener('click', () => setTimerType('timepass'));
-
     function selectGameMode(mode) {
       selectedGame = mode;
-      [modeCityBtn, modeCatchBtn, modePopBtn, modeSlimeBtn].forEach(btn => btn.classList.remove('active'));
+      [modeCityBtn, modeCatchBtn, modePopBtn, modeSlimeBtn, modeDanceBtn].forEach(btn => btn.classList.remove('active'));
 
       if (mode === 'city') {
         modeCityBtn.classList.add('active');
@@ -813,6 +754,9 @@
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
         hudSubLabel.innerHTML = 'BOUNCES: <strong id="hudSubValue" style="color: #4ade80;">0</strong>';
+      } else if (mode === 'dance') {
+        modeDanceBtn.classList.add('active');
+        hudSubLabel.innerHTML = `MOVE: <strong id="hudSubValue" style="color: #f43f5e;">${dancer.moveNames[dancer.moveIndex]}</strong>`;
       }
 
       if (gameActive) initCurrentGame();
@@ -822,6 +766,7 @@
     modeCatchBtn.addEventListener('click', () => selectGameMode('catch'));
     modePopBtn.addEventListener('click', () => selectGameMode('pop'));
     modeSlimeBtn.addEventListener('click', () => selectGameMode('slime'));
+    modeDanceBtn.addEventListener('click', () => selectGameMode('dance'));
 
     function initCurrentGame() {
       score = 0;
@@ -881,6 +826,40 @@
         slime.isHeld = false;
         const subVal = document.getElementById('hudSubValue');
         if (subVal) subVal.textContent = '0';
+      } else if (selectedGame === 'dance') {
+        dancer.moveIndex = 0;
+        dancer.clapsCount = 0;
+        const subVal = document.getElementById('hudSubValue');
+        if (subVal) subVal.textContent = dancer.moveNames[0];
+      }
+    }
+
+    function triggerDancerMove() {
+      dancer.moveIndex = (dancer.moveIndex + 1) % dancer.moveNames.length;
+      dancer.clapsCount++;
+      dancer.spotColor = dancer.spotColors[dancer.moveIndex];
+      score += 25;
+      hudScore.textContent = score;
+
+      const subVal = document.getElementById('hudSubValue');
+      if (subVal) subVal.textContent = dancer.moveNames[dancer.moveIndex];
+
+      const scale = [220, 246.9, 277.2, 293.7, 329.6, 370.0, 415.3, 440.0, 493.9, 554.4, 587.3, 659.3];
+      const rootPitch = scale[dancer.moveIndex % scale.length];
+      playSfx(rootPitch, rootPitch * 1.6, 0.16, 'triangle');
+
+      for (let i = 0; i < 28; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 9 + 4;
+        particles.push({
+          x: 230,
+          y: 240,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd - 3,
+          size: Math.random() * 5 + 3,
+          color: dancer.spotColors[Math.floor(Math.random() * dancer.spotColors.length)],
+          life: 1.0
+        });
       }
     }
 
@@ -907,7 +886,6 @@
       paddle.x = Math.max(10, Math.min(canvas.width - paddle.w - 10, mousePos.x - paddle.w / 2));
     }
 
-    // Touch & Mouse Interaction handling
     canvas.addEventListener('mousedown', (e) => {
       isInteracting = true;
       updatePointer(e.clientX, e.clientY);
@@ -949,6 +927,8 @@
           slime.isHeld = true;
           playSfx(550, 750, 0.08, 'triangle');
         }
+      } else if (selectedGame === 'dance') {
+        triggerDancerMove();
       }
     }
 
@@ -967,7 +947,6 @@
       const subVal = document.getElementById('hudSubValue');
       if (subVal) subVal.textContent = `${poppedCount} / 36`;
 
-      // Auto-replenish sheet if all are popped
       if (poppedCount === 36) {
         setTimeout(() => {
           bubbles.forEach(b => b.popped = false);
@@ -989,6 +968,8 @@
         renderPopGame();
       } else if (selectedGame === 'slime') {
         renderSlimeGame();
+      } else if (selectedGame === 'dance') {
+        renderDanceGame();
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -1174,7 +1155,6 @@
         ctx.translate(b.x, b.y);
 
         if (!b.popped) {
-          // Unpopped Egg Bubble
           ctx.fillStyle = 'rgba(254, 240, 138, 0.12)';
           ctx.strokeStyle = '#facc15';
           ctx.lineWidth = 2.5;
@@ -1183,13 +1163,11 @@
           ctx.fill();
           ctx.stroke();
 
-          // Highlight glare
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
           ctx.ellipse(-5, -7, 4, 6, -0.3, 0, Math.PI * 2);
           ctx.fill();
         } else {
-          // Popped dimpled look
           ctx.fillStyle = '#141a29';
           ctx.strokeStyle = '#334155';
           ctx.lineWidth = 1.5;
@@ -1202,13 +1180,12 @@
       });
     }
 
-    // 4. Squishy Slime Egg Fidget
+    // 4. Squishy Slime Egg
     function renderSlimeGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       if (slime.isHeld) {
-        // Drag towards finger with elastic spring
         const dx = mousePos.x - slime.x;
         const dy = mousePos.y - slime.y;
         slime.vx += dx * 0.18;
@@ -1219,12 +1196,10 @@
         slime.stretchX = 1 + Math.abs(dx) * 0.005;
         slime.stretchY = 1 + Math.abs(dy) * 0.005;
       } else {
-        // Gravity & wall bouncing
         slime.vy += 0.45;
         slime.vx *= 0.985;
         slime.vy *= 0.985;
 
-        // Restore roundness
         slime.stretchX += (1 - slime.stretchX) * 0.12;
         slime.stretchY += (1 - slime.stretchY) * 0.12;
       }
@@ -1232,7 +1207,6 @@
       slime.x += slime.vx;
       slime.y += slime.vy;
 
-      // Floor & Wall Collisions
       const r = slime.baseRadius;
       let bounced = false;
 
@@ -1272,12 +1246,10 @@
         createExplosion(slime.x, slime.y, '#4ade80', 6);
       }
 
-      // Draw Slime Jelly Body
       ctx.save();
       ctx.translate(slime.x, slime.y);
       ctx.scale(slime.stretchX, slime.stretchY);
 
-      // Jelly Glow
       const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, r);
       grad.addColorStop(0, '#86efac');
       grad.addColorStop(0.7, '#22c55e');
@@ -1288,7 +1260,6 @@
       ctx.ellipse(0, 0, r * 0.9, r * 1.15, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Cute Eyes
       ctx.fillStyle = '#052e16';
       ctx.beginPath();
       ctx.arc(-14, -6, 5, 0, Math.PI * 2);
@@ -1301,7 +1272,6 @@
       ctx.arc(16, -8, 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Blush
       ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
       ctx.beginPath();
       ctx.ellipse(-20, 4, 6, 3, 0, 0, Math.PI * 2);
@@ -1309,6 +1279,197 @@
       ctx.fill();
 
       ctx.restore();
+    }
+
+    // 5. Clap Dance Guy Game (12 Steps Engine)
+    function renderDanceGame() {
+      ctx.fillStyle = '#06080f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      dancer.grooveBeat += 0.045;
+      const angle = Math.sin(dancer.grooveBeat) * 0.45;
+
+      // Double moving spotlights
+      ctx.save();
+      ctx.translate(230, 0);
+      ctx.rotate(angle);
+      const spotGrad = ctx.createLinearGradient(0, 0, 0, 460);
+      spotGrad.addColorStop(0, dancer.spotColor);
+      spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = spotGrad;
+      ctx.globalAlpha = 0.28;
+      ctx.beginPath();
+      ctx.moveTo(-30, 0);
+      ctx.lineTo(30, 0);
+      ctx.lineTo(150, 460);
+      ctx.lineTo(-150, 460);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = 1.0;
+
+      // Platform
+      ctx.fillStyle = '#111624';
+      ctx.beginPath();
+      ctx.ellipse(230, 395, 160, 36, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = dancer.spotColor;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      const bobY = Math.abs(Math.sin(dancer.grooveBeat * 2.2)) * 14;
+      const swayX = Math.sin(dancer.grooveBeat * 1.5) * 8;
+      let rootX = 230 + swayX;
+      let rootY = 320 - bobY;
+
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#f8fafc';
+
+      const move = dancer.moveIndex;
+
+      // Leg positions
+      ctx.beginPath();
+      switch (move) {
+        case 0: // Groove Bob
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 22, rootY + 45); ctx.lineTo(rootX - 35, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 22, rootY + 45); ctx.lineTo(rootX + 35, 385);
+          break;
+        case 1: // Saturday Night Fever
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 35, rootY + 40); ctx.lineTo(rootX - 50, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 15, rootY + 40); ctx.lineTo(rootX + 25, 385);
+          break;
+        case 2: // The Wave & Pop
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 18, rootY + 40); ctx.lineTo(rootX - 15, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 25, rootY + 35); ctx.lineTo(rootX + 35, 385);
+          break;
+        case 3: // Arm Cross Shuffle
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 20, rootY + 45); ctx.lineTo(rootX + 35, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 15, rootY + 45); ctx.lineTo(rootX - 30, 385);
+          break;
+        case 4: // 360° Spin Jump
+          rootY -= 35; // Air leap
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 25, rootY + 25); ctx.lineTo(rootX - 40, rootY + 50);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 25, rootY + 25); ctx.lineTo(rootX + 40, rootY + 50);
+          break;
+        case 5: // The Robot (Angular Stiff)
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 30, rootY + 30); ctx.lineTo(rootX - 30, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 30, rootY + 30); ctx.lineTo(rootX + 30, 385);
+          break;
+        case 6: // Egyptian Walk
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 10, rootY + 35); ctx.lineTo(rootX - 25, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 35, rootY + 35); ctx.lineTo(rootX + 50, 385);
+          break;
+        case 7: // Windmill Flail
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 45, rootY + 35); ctx.lineTo(rootX - 60, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 45, rootY + 35); ctx.lineTo(rootX + 60, 385);
+          break;
+        case 8: // Low Matrix Lean
+          rootY += 20; // Deep squat
+          rootX -= 15;
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 45, rootY + 30); ctx.lineTo(rootX - 35, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 40, rootY + 30); ctx.lineTo(rootX + 50, 385);
+          break;
+        case 9: // The Dab & Drop
+          rootY += 10;
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 30, rootY + 35); ctx.lineTo(rootX - 45, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 30, rootY + 35); ctx.lineTo(rootX + 40, 385);
+          break;
+        case 10: // Breakdance Freeze
+          rootY += 35; rootX += 20;
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 60, rootY - 10); ctx.lineTo(rootX - 85, rootY - 35);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 20, rootY - 30); ctx.lineTo(rootX + 40, rootY - 55);
+          break;
+        case 11: // Air Guitar Solo
+          rootY += 10;
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX - 40, rootY + 25); ctx.lineTo(rootX - 55, 385);
+          ctx.moveTo(rootX, rootY); ctx.lineTo(rootX + 30, rootY + 35); ctx.lineTo(rootX + 45, 385);
+          break;
+      }
+      ctx.stroke();
+
+      // Torso & angle
+      ctx.beginPath();
+      let torsoAngle = (move === 8) ? 0.35 : (move === 10 ? -0.45 : (move === 9 ? -0.2 : 0));
+      let headX = rootX - Math.sin(torsoAngle) * 75;
+      let headY = rootY - Math.cos(torsoAngle) * 75;
+      let shoulderX = rootX - Math.sin(torsoAngle) * 55;
+      let shoulderY = rootY - Math.cos(torsoAngle) * 55;
+
+      ctx.moveTo(rootX, rootY);
+      ctx.lineTo(headX, headY);
+      ctx.stroke();
+
+      // Arm positions
+      ctx.beginPath();
+      switch (move) {
+        case 0: // Groove Bob
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 30, shoulderY + 20); ctx.lineTo(shoulderX - 45, shoulderY - 8);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 30, shoulderY + 20); ctx.lineTo(shoulderX + 45, shoulderY - 8);
+          break;
+        case 1: // Saturday Night Fever
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 45, shoulderY - 40); ctx.lineTo(shoulderX + 70, shoulderY - 75);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 30, shoulderY + 25); ctx.lineTo(shoulderX - 45, shoulderY + 50);
+          break;
+        case 2: // The Wave & Pop
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 40, shoulderY - 25); ctx.lineTo(shoulderX - 75, shoulderY - 15);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 40, shoulderY + 10); ctx.lineTo(shoulderX + 75, shoulderY + 35);
+          break;
+        case 3: // Arm Cross Shuffle
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 25, shoulderY + 12); ctx.lineTo(shoulderX + 45, shoulderY - 5);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 25, shoulderY + 12); ctx.lineTo(shoulderX - 45, shoulderY - 5);
+          break;
+        case 4: // 360° Spin Jump
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 50, shoulderY - 35); ctx.lineTo(shoulderX - 65, shoulderY - 65);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 50, shoulderY - 35); ctx.lineTo(shoulderX + 65, shoulderY - 65);
+          break;
+        case 5: // The Robot
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 40, shoulderY); ctx.lineTo(shoulderX - 40, shoulderY - 45);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 40, shoulderY); ctx.lineTo(shoulderX + 40, shoulderY + 45);
+          break;
+        case 6: // Egyptian Walk
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 35, shoulderY); ctx.lineTo(shoulderX + 35, shoulderY - 40);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 35, shoulderY); ctx.lineTo(shoulderX - 35, shoulderY + 40);
+          break;
+        case 7: // Windmill Flail
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 60, shoulderY - 50); ctx.lineTo(shoulderX - 75, shoulderY - 20);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 60, shoulderY + 40); ctx.lineTo(shoulderX + 75, shoulderY + 10);
+          break;
+        case 8: // Low Matrix Lean
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 35, shoulderY - 20); ctx.lineTo(shoulderX - 55, shoulderY - 50);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 35, shoulderY - 20); ctx.lineTo(shoulderX + 55, shoulderY - 50);
+          break;
+        case 9: // The Dab & Drop
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 25, shoulderY - 15); ctx.lineTo(shoulderX - 45, shoulderY - 25);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 45, shoulderY - 35); ctx.lineTo(shoulderX + 75, shoulderY - 60);
+          break;
+        case 10: // Breakdance Freeze (One Arm Floor Plant)
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 10, shoulderY + 40); ctx.lineTo(shoulderX - 15, 385);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 40, shoulderY - 20); ctx.lineTo(shoulderX + 65, shoulderY - 45);
+          break;
+        case 11: // Air Guitar Solo
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX - 40, shoulderY - 15); ctx.lineTo(shoulderX - 65, shoulderY - 35);
+          ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(shoulderX + 25, shoulderY + 15); ctx.lineTo(shoulderX + 15, shoulderY + 30);
+          break;
+      }
+      ctx.stroke();
+
+      // Head & Sunglasses
+      const actualHeadY = headY - 20;
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(headX, actualHeadY, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sunglasses
+      ctx.fillStyle = dancer.spotColor;
+      ctx.fillRect(headX - 16, actualHeadY - 4, 13, 8);
+      ctx.fillRect(headX + 3, actualHeadY - 4, 13, 8);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(headX - 16, actualHeadY - 4, 13, 8);
+      ctx.strokeRect(headX + 3, actualHeadY - 4, 13, 8);
     }
 
     function showGameCanvas(show) {
@@ -1325,19 +1486,13 @@
     }
 
     function updateDisplay() {
-      const targetSec = isTimePassMode ? timePassSeconds : remainingSeconds;
-      const minutes = Math.floor(targetSec / 60);
-      const seconds = targetSec % 60;
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
       display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-      if (isTimePassMode) {
-        progressBar.style.width = '100%';
-        progressBar.style.background = 'linear-gradient(90deg, #f59e0b 0%, #ef4444 100%)';
-      } else {
-        const progressFraction = totalSeconds > 0 ? (remainingSeconds / totalSeconds) : 0;
-        progressBar.style.width = `${progressFraction * 100}%`;
-        progressBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #38bdf8 100%)';
-      }
+      const progressFraction = totalSeconds > 0 ? (remainingSeconds / totalSeconds) : 0;
+      progressBar.style.width = `${progressFraction * 100}%`;
+      progressBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #38bdf8 100%)';
     }
 
     function runFinaleSequence() {
@@ -1410,7 +1565,7 @@
     function startTimer() {
       if (isRunning) return;
 
-      if (!isTimePassMode && remainingSeconds <= 0) {
+      if (remainingSeconds <= 0) {
         remainingSeconds = totalSeconds;
         resetVisuals();
       }
@@ -1419,18 +1574,13 @@
       showGameCanvas(true);
 
       timerInterval = setInterval(() => {
-        if (isTimePassMode) {
-          timePassSeconds++;
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
           updateDisplay();
         } else {
-          if (remainingSeconds > 0) {
-            remainingSeconds--;
-            updateDisplay();
-          } else {
-            clearInterval(timerInterval);
-            isRunning = false;
-            runFinaleSequence();
-          }
+          clearInterval(timerInterval);
+          isRunning = false;
+          runFinaleSequence();
         }
       }, 1000);
     }
@@ -1448,7 +1598,6 @@
     function resetTimer() {
       clearInterval(timerInterval);
       isRunning = false;
-      timePassSeconds = 0;
       remainingSeconds = totalSeconds;
       resetVisuals();
       updateDisplay();
