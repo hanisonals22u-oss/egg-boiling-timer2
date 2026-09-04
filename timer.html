@@ -461,7 +461,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Pull palms apart to stretch Humpty and hear him shout "Ammaaaaa!"</p>
+      <p class="subtitle">Squeeze, stretch, or slam Humpty into the walls & corners for funny squishes!</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -615,15 +615,15 @@
     let lastHumptySpeechTime = 0;
     function speakAmma() {
       const now = Date.now();
-      if (now - lastHumptySpeechTime < 1800) return; // Prevent spamming speech
+      if (now - lastHumptySpeechTime < 1800) return;
       lastHumptySpeechTime = now;
 
       try {
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance("Ammaaaaa!");
-          utterance.pitch = 1.7; // High-pitched comical voice
-          utterance.rate = 0.85;  // Slightly drawn out
+          utterance.pitch = 1.7;
+          utterance.rate = 0.85;
           window.speechSynthesis.speak(utterance);
         }
       } catch (e) {}
@@ -690,7 +690,7 @@
     // Game 3: Bubble Pop
     let bubbles = [];
 
-    // Game 4: Fluid Jelly Humpty Dumpty Engine
+    // Game 4: Fluid Humpty Dumpty Engine (with Wall / Corner squashes)
     let humpty = {
       x: 230,
       y: 220,
@@ -707,6 +707,9 @@
       jiggleIntensity: 0,
       state: 'idle',
       lastState: 'idle',
+      isCornered: false,
+      cornerTimer: 0,
+      lastImpactTime: 0,
       isHeld: false
     };
 
@@ -898,7 +901,6 @@
         const neutralDist = 0.28;
 
         if (dist < neutralDist) {
-          // Pressing palms INWARDS -> tall skinny squish
           const inwardRatio = Math.max(0, (neutralDist - dist) / 0.18);
           humpty.targetScaleX = Math.max(0.40, 1.0 - inwardRatio * 0.58);
           humpty.targetScaleY = Math.min(2.1, 1.0 + inwardRatio * 0.95);
@@ -915,7 +917,6 @@
           score += 2;
           hudScore.textContent = score;
         } else {
-          // Pulling palms OUTWARDS -> stretch out & shout AMMAAAAA!
           const outwardRatio = (dist - neutralDist) / 0.25;
           const stretchFactor = Math.min(2.5, 1.0 + outwardRatio * 1.2);
           humpty.targetScaleX = stretchFactor;
@@ -923,7 +924,6 @@
           humpty.state = 'stretched';
           humpty.jiggleIntensity = 0.35;
 
-          // Shouts AMMAAAAA when stretched wide!
           speakAmma();
 
           if (humpty.lastState !== 'stretched') {
@@ -997,7 +997,7 @@
         hudSubLabel.innerHTML = 'POPPED: <strong id="hudSubValue" style="color: #facc15;">0 / 36</strong>';
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
-        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">PULL PALMS APART!</strong>';
+        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">SLIDE & SLAM WALLS!</strong>';
         if (isRunning && !isCamRunning) startWebcam();
       } else if (mode === 'dance') {
         modeDanceBtn.classList.add('active');
@@ -1071,6 +1071,8 @@
         humpty.targetScaleX = 1.0;
         humpty.targetScaleY = 1.0;
         humpty.state = 'idle';
+        humpty.isCornered = false;
+        humpty.cornerTimer = 0;
       } else if (selectedGame === 'dance') {
         bean.moveIndex = 0;
         bean.clapsCount = 0;
@@ -1451,12 +1453,12 @@
       });
     }
 
-    // 4. Fluid Humpty Dumpty Engine (with Inward Press Squeeze & Ammaaaaa Speech)
+    // 4. Fluid Humpty Dumpty Engine (with Wall & Corner Impact Squashes + Sound FX)
     function renderFluidHumptyGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Low Wall background
+      // Brick Wall at bottom
       ctx.fillStyle = '#7f1d1d';
       ctx.fillRect(0, 395, canvas.width, 65);
       ctx.strokeStyle = '#fca5a5';
@@ -1466,10 +1468,10 @@
       ctx.lineTo(canvas.width, 395);
       ctx.stroke();
 
-      // Flight Spring Interpolation
+      // Fluid Spring Flight Interpolation
       const dx = humpty.targetX - humpty.x;
       const dy = humpty.targetY - humpty.y;
-      const speed = Math.hypot(dx, dy);
+      const flightSpeed = Math.hypot(dx, dy);
 
       humpty.vx += dx * 0.08;
       humpty.vy += dy * 0.08;
@@ -1479,11 +1481,66 @@
       humpty.x += humpty.vx;
       humpty.y += humpty.vy;
 
-      humpty.x = Math.max(70, Math.min(canvas.width - 70, humpty.x));
-      humpty.y = Math.max(70, Math.min(canvas.height - 70, humpty.y));
+      // Wall & Corner Collision Detection & Squashes
+      const boundMinX = 65;
+      const boundMaxX = canvas.width - 65;
+      const boundMinY = 65;
+      const boundMaxY = canvas.height - 65;
 
+      let hitLeft = false, hitRight = false, hitTop = false, hitBottom = false;
+
+      if (humpty.x <= boundMinX) { humpty.x = boundMinX; hitLeft = true; }
+      if (humpty.x >= boundMaxX) { humpty.x = boundMaxX; hitRight = true; }
+      if (humpty.y <= boundMinY) { humpty.y = boundMinY; hitTop = true; }
+      if (humpty.y >= boundMaxY) { humpty.y = boundMaxY; hitBottom = true; }
+
+      const isCorner = (hitLeft || hitRight) && (hitTop || hitBottom);
+      const isWall = (hitLeft || hitRight || hitTop || hitBottom);
+      const now = Date.now();
+
+      // Funny Cartoon Wall & Corner Sounds
+      if (isWall && (now - humpty.lastImpactTime > 150)) {
+        humpty.lastImpactTime = now;
+        score += 3;
+        hudScore.textContent = score;
+
+        if (isCorner) {
+          humpty.isCornered = true;
+          humpty.cornerTimer = 25; // Displays dizzy stars
+          // High-pitched funny boing
+          playSfx(750, 220, 0.22, 'sawtooth');
+          createExplosion(humpty.x, humpty.y, '#facc15', 15);
+          const subVal = document.getElementById('hudSubValue');
+          if (subVal) subVal.textContent = 'CORNER BONK!! 💫';
+        } else {
+          // Rubbery cartoon squash thud
+          const impactPitches = [340, 480, 290, 520];
+          const randPitch = impactPitches[Math.floor(Math.random() * impactPitches.length)];
+          playSfx(randPitch, randPitch * 0.45, 0.12, 'triangle');
+          createExplosion(humpty.x, humpty.y, '#38bdf8', 8);
+        }
+      }
+
+      // Deform shape on wall/corner impact
+      if (isCorner) {
+        humpty.targetScaleX = 1.35;
+        humpty.targetScaleY = 1.35;
+        humpty.jiggleIntensity = 0.55;
+      } else if (hitLeft || hitRight) {
+        // Flatten horizontally against side wall
+        humpty.targetScaleX = 0.58;
+        humpty.targetScaleY = 1.45;
+        humpty.jiggleIntensity = 0.45;
+      } else if (hitTop || hitBottom) {
+        // Flatten vertically against floor or ceiling
+        humpty.targetScaleX = 1.45;
+        humpty.targetScaleY = 0.58;
+        humpty.jiggleIntensity = 0.45;
+      }
+
+      // Jiggle calculations from motion
       humpty.jigglePhase += 0.22;
-      const flightJiggle = Math.min(0.28, speed * 0.012);
+      const flightJiggle = Math.min(0.28, flightSpeed * 0.012);
       humpty.jiggleIntensity = Math.max(humpty.jiggleIntensity * 0.94, flightJiggle);
 
       const jiggleWaveX = Math.sin(humpty.jigglePhase) * humpty.jiggleIntensity;
@@ -1509,7 +1566,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // Little speech pointer triangle
         ctx.beginPath();
         ctx.moveTo(-8, -humpty.baseRadius * 1.5 - 13);
         ctx.lineTo(0, -humpty.baseRadius * 1.5 - 2);
@@ -1522,6 +1578,22 @@
         ctx.font = 'bold 15px -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Ammaaaaa!', 0, -humpty.baseRadius * 1.5 - 24);
+        ctx.restore();
+      }
+
+      // Dizzy Stars around head when hitting a corner
+      if (humpty.cornerTimer > 0) {
+        humpty.cornerTimer--;
+        ctx.save();
+        for (let i = 0; i < 3; i++) {
+          const starAngle = (Date.now() * 0.008) + (i * (Math.PI * 2 / 3));
+          const starX = Math.cos(starAngle) * 55;
+          const starY = -humpty.baseRadius * 1.1 + Math.sin(starAngle) * 16;
+          ctx.fillStyle = '#facc15';
+          ctx.beginPath();
+          ctx.arc(starX, starY, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.restore();
       }
 
@@ -1582,8 +1654,8 @@
       ctx.arc(0, 10, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sweat droplets when squeezed
-      if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
+      // Sweat droplets when squeezed or cornered
+      if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed' || humpty.cornerTimer > 0) {
         ctx.fillStyle = '#38bdf8';
         ctx.beginPath();
         ctx.ellipse(r * 0.8, -r * 0.6, 4, 7, 0.4, 0, Math.PI * 2);
@@ -1601,9 +1673,19 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Pupils
+      // Pupils: dizzy swirl when cornered, crossed when squeezed
       ctx.fillStyle = '#000000';
-      if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
+      if (humpty.cornerTimer > 0) {
+        // Dizzy X-eyes
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-26, -39); ctx.lineTo(-18, -31);
+        ctx.moveTo(-18, -39); ctx.lineTo(-26, -31);
+        ctx.moveTo(18, -39); ctx.lineTo(26, -31);
+        ctx.moveTo(26, -39); ctx.lineTo(18, -31);
+        ctx.stroke();
+      } else if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
         ctx.beginPath();
         ctx.arc(-18, -35, 5, 0, Math.PI * 2);
         ctx.arc(18, -35, 5, 0, Math.PI * 2);
@@ -1638,7 +1720,10 @@
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
+      if (humpty.cornerTimer > 0) {
+        // Wobbly dizzy mouth
+        ctx.arc(0, -10, 10, 0, Math.PI * 2);
+      } else if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
         ctx.moveTo(-16, -10);
         ctx.lineTo(-6, -14);
         ctx.lineTo(6, -8);
@@ -2056,7 +2141,6 @@
 
     resetBtn.addEventListener('click', resetTimer);
 
-    // Initial load
     initCurrentGame();
     gameLoop();
     updateDisplay();
