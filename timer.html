@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Egg Time - Jellied Humpty Dumpty & Mr. Bean</title>
+  <title>Egg Time - Fixed Arcade & Timer</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <style>
@@ -461,7 +461,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Squeeze, stretch, or slam Humpty into the walls & corners for funny squishes!</p>
+      <p class="subtitle">Pick a time or clap to start any game immediately!</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -491,7 +491,7 @@
         </div>
         <button class="cam-toggle-btn" id="camToggleBtn">
           <span>📷</span>
-          <span id="camStatusText">Hand Cam (Auto)</span>
+          <span id="camStatusText">Hand Cam</span>
         </button>
       </div>
 
@@ -511,7 +511,7 @@
 
       <div class="game-hud-bar">
         <span>SCORE: <strong id="hudScore" style="color: #22c55e;">0</strong></span>
-        <span id="hudSubLabel">ACTION: <strong id="hudSubValue" style="color: #38bdf8;">READY</strong></span>
+        <span id="hudSubLabel">HEAT GAUGE: <strong id="hudSubValue" style="color: #38bdf8;">ACTIVE</strong></span>
       </div>
 
       <div class="progress-bar-track">
@@ -670,7 +670,6 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    let gameActive = true;
     let animationFrameId = null;
     let score = 0;
     let mousePos = { x: 230, y: 230 };
@@ -690,7 +689,7 @@
     // Game 3: Bubble Pop
     let bubbles = [];
 
-    // Game 4: Fluid Humpty Dumpty Engine (with Wall / Corner squashes)
+    // Game 4: Fluid Humpty Dumpty
     let humpty = {
       x: 230,
       y: 220,
@@ -790,12 +789,12 @@
         clapToggleBtn.style.transform = 'scale(1.15)';
         setTimeout(() => { clapToggleBtn.style.transform = 'scale(1)'; }, 150);
 
-        if (!isRunning) startTimer();
+        if (!isRunning) {
+          startTimer();
+        }
 
         if (selectedGame === 'dance') {
           triggerBeanMove();
-        } else {
-          toggleTimerRunState();
         }
 
         setTimeout(() => { clapCooldown = false; }, 180);
@@ -831,7 +830,7 @@
         if (!cameraInstance) {
           cameraInstance = new Camera(webcamVideo, {
             onFrame: async () => {
-              if (isCamRunning) await handsEstimator.send({ image: webcamVideo });
+              if (isCamRunning && handsEstimator) await handsEstimator.send({ image: webcamVideo });
             },
             width: 320,
             height: 240
@@ -853,7 +852,7 @@
       if (cameraInstance) cameraInstance.stop();
       isCamRunning = false;
       camToggleBtn.classList.remove('active');
-      camStatusText.textContent = "Hand Cam (Auto)";
+      camStatusText.textContent = "Hand Cam";
       camPip.style.display = 'none';
     }
 
@@ -865,7 +864,6 @@
       }
     });
 
-    // Inward Squeeze, Outward Stretch & Ammaaaaa Trigger
     function onHandResults(results) {
       if (selectedGame !== 'slime') return;
 
@@ -892,7 +890,6 @@
         humpty.targetY = palmCenter.y * canvas.height;
       }
 
-      // 2 Hands: Inward Compression vs Outward Stretch
       if (hands.length === 2) {
         const hand1Center = hands[0][9];
         const hand2Center = hands[1][9];
@@ -939,7 +936,6 @@
         return;
       }
 
-      // 1 Hand: Squeeze Gestures
       if (hands.length === 1) {
         const lm = hands[0];
         const wrist = lm[0];
@@ -997,7 +993,7 @@
         hudSubLabel.innerHTML = 'POPPED: <strong id="hudSubValue" style="color: #facc15;">0 / 36</strong>';
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
-        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">SLIDE & SLAM WALLS!</strong>';
+        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">READY</strong>';
         if (isRunning && !isCamRunning) startWebcam();
       } else if (mode === 'dance') {
         modeDanceBtn.classList.add('active');
@@ -1034,8 +1030,10 @@
           });
           currentX += width + 6;
         }
-        tanks.push({ x: 40, y: canvas.height - 24, w: 28, h: 14, speed: 1.2, dir: 1 });
-        tanks.push({ x: 300, y: canvas.height - 24, w: 28, h: 14, speed: 0.9, dir: -1 });
+        tanks = [
+          { x: 40, y: canvas.height - 24, w: 28, h: 14, speed: 1.2, dir: 1 },
+          { x: 300, y: canvas.height - 24, w: 28, h: 14, speed: 0.9, dir: -1 }
+        ];
       } else if (selectedGame === 'catch') {
         fallingItems = [];
         catchSpawnTimer = 0;
@@ -1189,6 +1187,7 @@
     }, { passive: true });
 
     function handlePressStart() {
+      if (!isRunning) startTimer();
       if (selectedGame === 'pop') {
         popAtCoord(mousePos.x, mousePos.y);
       } else if (selectedGame === 'slime') {
@@ -1230,7 +1229,6 @@
     }
 
     function gameLoop() {
-      if (!gameActive) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (selectedGame === 'city') {
@@ -1453,12 +1451,11 @@
       });
     }
 
-    // 4. Fluid Humpty Dumpty Engine (with Wall & Corner Impact Squashes + Sound FX)
+    // 4. Fluid Humpty Dumpty Engine
     function renderFluidHumptyGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Brick Wall at bottom
       ctx.fillStyle = '#7f1d1d';
       ctx.fillRect(0, 395, canvas.width, 65);
       ctx.strokeStyle = '#fca5a5';
@@ -1468,7 +1465,6 @@
       ctx.lineTo(canvas.width, 395);
       ctx.stroke();
 
-      // Fluid Spring Flight Interpolation
       const dx = humpty.targetX - humpty.x;
       const dy = humpty.targetY - humpty.y;
       const flightSpeed = Math.hypot(dx, dy);
@@ -1481,7 +1477,6 @@
       humpty.x += humpty.vx;
       humpty.y += humpty.vy;
 
-      // Wall & Corner Collision Detection & Squashes
       const boundMinX = 65;
       const boundMaxX = canvas.width - 65;
       const boundMinY = 65;
@@ -1498,7 +1493,6 @@
       const isWall = (hitLeft || hitRight || hitTop || hitBottom);
       const now = Date.now();
 
-      // Funny Cartoon Wall & Corner Sounds
       if (isWall && (now - humpty.lastImpactTime > 150)) {
         humpty.lastImpactTime = now;
         score += 3;
@@ -1506,14 +1500,12 @@
 
         if (isCorner) {
           humpty.isCornered = true;
-          humpty.cornerTimer = 25; // Displays dizzy stars
-          // High-pitched funny boing
+          humpty.cornerTimer = 25;
           playSfx(750, 220, 0.22, 'sawtooth');
           createExplosion(humpty.x, humpty.y, '#facc15', 15);
           const subVal = document.getElementById('hudSubValue');
           if (subVal) subVal.textContent = 'CORNER BONK!! 💫';
         } else {
-          // Rubbery cartoon squash thud
           const impactPitches = [340, 480, 290, 520];
           const randPitch = impactPitches[Math.floor(Math.random() * impactPitches.length)];
           playSfx(randPitch, randPitch * 0.45, 0.12, 'triangle');
@@ -1521,24 +1513,20 @@
         }
       }
 
-      // Deform shape on wall/corner impact
       if (isCorner) {
         humpty.targetScaleX = 1.35;
         humpty.targetScaleY = 1.35;
         humpty.jiggleIntensity = 0.55;
       } else if (hitLeft || hitRight) {
-        // Flatten horizontally against side wall
         humpty.targetScaleX = 0.58;
         humpty.targetScaleY = 1.45;
         humpty.jiggleIntensity = 0.45;
       } else if (hitTop || hitBottom) {
-        // Flatten vertically against floor or ceiling
         humpty.targetScaleX = 1.45;
         humpty.targetScaleY = 0.58;
         humpty.jiggleIntensity = 0.45;
       }
 
-      // Jiggle calculations from motion
       humpty.jigglePhase += 0.22;
       const flightJiggle = Math.min(0.28, flightSpeed * 0.012);
       humpty.jiggleIntensity = Math.max(humpty.jiggleIntensity * 0.94, flightJiggle);
@@ -1555,7 +1543,6 @@
       ctx.save();
       ctx.translate(humpty.x, humpty.y);
 
-      // Speech Bubble when Stretched
       if (humpty.state === 'stretched') {
         ctx.save();
         ctx.fillStyle = '#ffffff';
@@ -1581,7 +1568,6 @@
         ctx.restore();
       }
 
-      // Dizzy Stars around head when hitting a corner
       if (humpty.cornerTimer > 0) {
         humpty.cornerTimer--;
         ctx.save();
@@ -1604,7 +1590,6 @@
 
       const r = humpty.baseRadius;
 
-      // Elastic Deformable Bezier Mesh
       const topOffset = Math.sin(humpty.jigglePhase * 1.5) * (humpty.jiggleIntensity * 12);
       const eggGrad = ctx.createRadialGradient(0, -20, 10, 0, 0, r * 1.3);
       eggGrad.addColorStop(0, '#ffffff');
@@ -1624,7 +1609,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // Red Striped Pants
       ctx.save();
       ctx.clip();
       ctx.fillStyle = '#dc2626';
@@ -1634,7 +1618,6 @@
         ctx.fillRect(x, 15, 8, r * 1.5);
       }
 
-      // Belt
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(-r * 1.3, 10, r * 2.6, 10);
       ctx.fillStyle = '#facc15';
@@ -1643,7 +1626,6 @@
       ctx.fillRect(-6, 10, 12, 10);
       ctx.restore();
 
-      // Bowtie
       ctx.fillStyle = '#2563eb';
       ctx.beginPath();
       ctx.moveTo(-18, 5); ctx.lineTo(-2, 10); ctx.lineTo(-18, 15); ctx.closePath();
@@ -1654,7 +1636,6 @@
       ctx.arc(0, 10, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sweat droplets when squeezed or cornered
       if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed' || humpty.cornerTimer > 0) {
         ctx.fillStyle = '#38bdf8';
         ctx.beginPath();
@@ -1663,7 +1644,6 @@
         ctx.fill();
       }
 
-      // Eyes
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(-22, -35, 12, 0, Math.PI * 2);
@@ -1673,10 +1653,8 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Pupils: dizzy swirl when cornered, crossed when squeezed
       ctx.fillStyle = '#000000';
       if (humpty.cornerTimer > 0) {
-        // Dizzy X-eyes
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -1709,19 +1687,16 @@
         ctx.fill();
       }
 
-      // Cheeks
       ctx.fillStyle = 'rgba(248, 113, 113, 0.45)';
       ctx.beginPath();
       ctx.arc(-32, -18, 9, 0, Math.PI * 2);
       ctx.arc(32, -18, 9, 0, Math.PI * 2);
       ctx.fill();
 
-      // Mouth
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 3;
       ctx.beginPath();
       if (humpty.cornerTimer > 0) {
-        // Wobbly dizzy mouth
         ctx.arc(0, -10, 10, 0, Math.PI * 2);
       } else if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
         ctx.moveTo(-16, -10);
@@ -1737,7 +1712,6 @@
       }
       ctx.stroke();
 
-      // Animated dangling legs
       const legSway = Math.sin(humpty.jigglePhase * 1.8) * 8;
       ctx.lineWidth = 6;
       ctx.strokeStyle = '#dc2626';
@@ -1746,7 +1720,6 @@
       ctx.moveTo(18, 60); ctx.lineTo(24 - legSway, 105);
       ctx.stroke();
 
-      // Shoes
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
       ctx.ellipse(-28 + legSway, 107, 10, 6, 0, 0, Math.PI * 2);
@@ -1977,20 +1950,6 @@
       ctx.restore();
     }
 
-    function showGameCanvas(show) {
-      gameActive = show;
-      canvas.style.display = show ? 'block' : 'none';
-      finaleStage.style.display = show ? 'none' : 'flex';
-
-      if (show) {
-        initCurrentGame();
-        if (!animationFrameId) gameLoop();
-      } else if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-    }
-
     function updateDisplay() {
       const minutes = Math.floor(remainingSeconds / 60);
       const seconds = remainingSeconds % 60;
@@ -2002,7 +1961,8 @@
     }
 
     function runFinaleSequence() {
-      showGameCanvas(false);
+      canvas.style.display = 'none';
+      finaleStage.style.display = 'flex';
       stopWebcam();
 
       henActor.style.opacity = '1';
@@ -2059,7 +2019,8 @@
     }
 
     function resetVisuals() {
-      showGameCanvas(true);
+      canvas.style.display = 'block';
+      finaleStage.style.display = 'none';
       stopWebcam();
       arenaSquare.classList.remove('quake');
       henActor.style.opacity = '1';
@@ -2084,6 +2045,7 @@
         startWebcam();
       }
 
+      clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         if (remainingSeconds > 0) {
           remainingSeconds--;
@@ -2141,6 +2103,7 @@
 
     resetBtn.addEventListener('click', resetTimer);
 
+    // Initial load
     initCurrentGame();
     gameLoop();
     updateDisplay();
