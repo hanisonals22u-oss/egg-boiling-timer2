@@ -153,7 +153,7 @@
       background: #334155;
     }
 
-    /* Clap & Cam Bars */
+    /* Controls row: Clap & Cam */
     .sensors-row {
       display: flex;
       gap: 0.6rem;
@@ -335,7 +335,7 @@
       cursor: crosshair;
     }
 
-    /* Webcam PiP (Picture-in-picture) mini feed */
+    /* Webcam PiP mini feed */
     .cam-preview-pip {
       position: absolute;
       bottom: 12px;
@@ -464,7 +464,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Use your camera: squeeze 1 hand to squash Humpty, 2 hands to stretch him!</p>
+      <p class="subtitle">Clap to start! Camera automatically turns on for Humpty Dumpty.</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -482,7 +482,6 @@
         <button class="set-custom-btn" id="applyCustomBtn">Set</button>
       </div>
 
-      <!-- Controls row: Clap & Cam -->
       <div class="sensors-row">
         <div class="clap-trigger-bar">
           <button class="clap-toggle-btn" id="clapToggleBtn">
@@ -495,7 +494,7 @@
         </div>
         <button class="cam-toggle-btn" id="camToggleBtn">
           <span>📷</span>
-          <span id="camStatusText">Enable Hand Cam</span>
+          <span id="camStatusText">Hand Cam (Auto)</span>
         </button>
       </div>
 
@@ -525,7 +524,6 @@
       <div class="arena-square" id="arenaSquare">
         <canvas id="gameCanvas" width="460" height="460"></canvas>
 
-        <!-- Mini Webcam Preview -->
         <div class="cam-preview-pip" id="camPip">
           <video id="webcamVideo" autoplay playsinline muted></video>
         </div>
@@ -678,7 +676,7 @@
     // Game 3: Bubble Pop
     let bubbles = [];
 
-    // Game 4: Humpty Dumpty Squishy & Stretch Engine
+    // Game 4: Humpty Dumpty
     let humpty = {
       x: 230,
       y: 220,
@@ -689,7 +687,7 @@
       scaleY: 1.0,
       targetScaleX: 1.0,
       targetScaleY: 1.0,
-      state: 'idle', // 'idle', 'squeezed', 'stretched'
+      state: 'idle',
       isHeld: false
     };
 
@@ -697,12 +695,8 @@
     let dancer = {
       moveIndex: 0,
       grooveBeat: 0,
-      speedMultiplier: 1.0,
-      targetSpeedMultiplier: 1.0,
-      lastClapTime: 0,
-      bpm: 80,
       spotColor: '#38bdf8',
-      spotColors: ['#38bdf8', '#f43f5e', '#a855f7', '#facc15', '#22c55e', '#ec4899'],
+      spotColors: ['#38bdf8', '#f43f5e', '#a855f7', '#facc15', '#22c55e'],
       moveNames: ['Groove Bob', 'Disco Point', 'Arm Wave', 'Cross Pop', 'Spin Jump'],
       clapsCount: 0
     };
@@ -781,54 +775,64 @@
       if (!isClapArmed) initClapListener();
     }, { once: true });
 
-    // WebCam Hand Recognition Setup
-    async function toggleWebcam() {
-      if (isCamRunning) {
-        if (cameraInstance) cameraInstance.stop();
-        isCamRunning = false;
-        camToggleBtn.classList.remove('active');
-        camStatusText.textContent = "Enable Hand Cam";
-        camPip.style.display = 'none';
-        return;
-      }
-
+    // WebCam Hand Recognition Engine
+    async function startWebcam() {
+      if (isCamRunning) return;
       try {
         camStatusText.textContent = "Loading Vision...";
-        handsEstimator = new Hands({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
+        if (!handsEstimator) {
+          handsEstimator = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+          });
 
-        handsEstimator.setOptions({
-          maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.55,
-          minTrackingConfidence: 0.55
-        });
+          handsEstimator.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.55,
+            minTrackingConfidence: 0.55
+          });
 
-        handsEstimator.onResults(onHandResults);
+          handsEstimator.onResults(onHandResults);
+        }
 
-        cameraInstance = new Camera(webcamVideo, {
-          onFrame: async () => {
-            if (isCamRunning) await handsEstimator.send({ image: webcamVideo });
-          },
-          width: 320,
-          height: 240
-        });
+        if (!cameraInstance) {
+          cameraInstance = new Camera(webcamVideo, {
+            onFrame: async () => {
+              if (isCamRunning) await handsEstimator.send({ image: webcamVideo });
+            },
+            width: 320,
+            height: 240
+          });
+        }
 
         await cameraInstance.start();
         isCamRunning = true;
         camToggleBtn.classList.add('active');
-        camStatusText.textContent = "Hand Cam Live";
+        camStatusText.textContent = "Cam Active";
         camPip.style.display = 'block';
       } catch (err) {
-        alert("Camera permission denied or not available on this device.");
-        camStatusText.textContent = "Camera Failed";
+        camStatusText.textContent = "Cam Denied";
       }
     }
 
-    camToggleBtn.addEventListener('click', toggleWebcam);
+    function stopWebcam() {
+      if (!isCamRunning) return;
+      if (cameraInstance) cameraInstance.stop();
+      isCamRunning = false;
+      camToggleBtn.classList.remove('active');
+      camStatusText.textContent = "Hand Cam (Auto)";
+      camPip.style.display = 'none';
+    }
 
-    // Hand Tracking Gesture Interpreter
+    camToggleBtn.addEventListener('click', () => {
+      if (isCamRunning) {
+        stopWebcam();
+      } else {
+        startWebcam();
+      }
+    });
+
+    // Hand Gestures: 1 hand squeeze, 2 hands stretch
     function onHandResults(results) {
       if (selectedGame !== 'slime') return;
 
@@ -845,11 +849,8 @@
       if (hands.length === 2) {
         const hand1Wrist = hands[0][0];
         const hand2Wrist = hands[1][0];
-
-        // Distance between two hands in viewport ratio
         const dist = Math.hypot(hand1Wrist.x - hand2Wrist.x, hand1Wrist.y - hand2Wrist.y);
 
-        // Clapped / Close Palms -> pulling apart stretches Humpty
         if (dist > 0.18) {
           const stretchFactor = Math.min(2.4, Math.max(0.6, dist * 3.4));
           humpty.targetScaleX = stretchFactor;
@@ -865,7 +866,7 @@
         return;
       }
 
-      // Case B: 1 Hand -> Squeeze / Fist Gesture
+      // Case B: 1 Hand -> Squeeze Gesture
       if (hands.length === 1) {
         const lm = hands[0];
         const wrist = lm[0];
@@ -873,15 +874,12 @@
         const middleTip = lm[12];
         const ringTip = lm[16];
 
-        // Measure average distance from fingertips to wrist (open palm vs clenched fist)
         const d1 = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
         const d2 = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y);
         const d3 = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y);
         const avgTipDist = (d1 + d2 + d3) / 3;
 
-        // Fist / Palm squeeze threshold
         if (avgTipDist < 0.28) {
-          // Closed palm / Fist SQUEEZE: flat egg
           humpty.targetScaleX = 1.65;
           humpty.targetScaleY = 0.52;
           humpty.state = 'squeezed';
@@ -892,7 +890,6 @@
           score += 2;
           hudScore.textContent = score;
         } else {
-          // Open Palm: relaxed shape
           humpty.targetScaleX = 1.0;
           humpty.targetScaleY = 1.0;
           humpty.state = 'idle';
@@ -918,6 +915,7 @@
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
         hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">SQUEEZE PALM</strong>';
+        if (isRunning && !isCamRunning) startWebcam();
       } else if (mode === 'dance') {
         modeDanceBtn.classList.add('active');
         hudSubLabel.innerHTML = 'DANCE: <strong id="hudSubValue" style="color: #f43f5e;">READY</strong>';
@@ -1308,12 +1306,12 @@
       });
     }
 
-    // 4. Humpty Dumpty Squishy & Stretch Engine
+    // 4. Humpty Dumpty Game
     function renderHumptyDumptyGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Brick Wall at bottom for Humpty to sit on
+      // Brick Wall
       ctx.fillStyle = '#991b1b';
       ctx.fillRect(0, 365, canvas.width, 95);
       ctx.strokeStyle = '#fca5a5';
@@ -1330,7 +1328,6 @@
       humpty.scaleY += (humpty.targetScaleY - humpty.scaleY) * 0.14;
 
       if (!humpty.isHeld && !isCamRunning) {
-        // Natural gentle breathing wobble
         const breath = Math.sin(Date.now() * 0.004) * 0.04;
         humpty.scaleX += breath;
         humpty.scaleY -= breath;
@@ -1352,7 +1349,6 @@
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 3.5;
       ctx.beginPath();
-      // Humpty egg shape (tapered top, bulbous bottom)
       ctx.ellipse(0, 0, r * 0.95, r * 1.25, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
@@ -1391,7 +1387,6 @@
       ctx.arc(0, 10, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Face Expressions based on state
       const eyeOffset = (humpty.state === 'squeezed') ? 3 : 0;
 
       // Eyes
@@ -1407,19 +1402,16 @@
       // Pupils
       ctx.fillStyle = '#000000';
       if (humpty.state === 'squeezed') {
-        // Crossed Squished eyes
         ctx.beginPath();
         ctx.arc(-18, -35, 5, 0, Math.PI * 2);
         ctx.arc(18, -35, 5, 0, Math.PI * 2);
         ctx.fill();
       } else if (humpty.state === 'stretched') {
-        // Shocked dilated pupils
         ctx.beginPath();
         ctx.arc(-22, -35, 3.5, 0, Math.PI * 2);
         ctx.arc(22, -35, 3.5, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // Normal cheerful look
         ctx.beginPath();
         ctx.arc(-20, -35, 5.5, 0, Math.PI * 2);
         ctx.arc(20, -35, 5.5, 0, Math.PI * 2);
@@ -1443,23 +1435,20 @@
       ctx.lineWidth = 3;
       ctx.beginPath();
       if (humpty.state === 'squeezed') {
-        // Squiggly strained mouth
         ctx.moveTo(-16, -10);
         ctx.lineTo(-6, -14);
         ctx.lineTo(6, -8);
         ctx.lineTo(16, -12);
       } else if (humpty.state === 'stretched') {
-        // Open gasp "O"
         ctx.ellipse(0, -10, 8, 14, 0, 0, Math.PI * 2);
         ctx.fillStyle = '#ef4444';
         ctx.fill();
       } else {
-        // Wide toothy smile
         ctx.arc(0, -16, 16, 0.2, Math.PI - 0.2);
       }
       ctx.stroke();
 
-      // Dangling Legs over the wall
+      // Legs
       ctx.lineWidth = 6;
       ctx.strokeStyle = '#dc2626';
       ctx.beginPath();
@@ -1467,7 +1456,7 @@
       ctx.moveTo(18, 60); ctx.lineTo(24, 110);
       ctx.stroke();
 
-      // Shiny Black Boots
+      // Shoes
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
       ctx.ellipse(-28, 112, 10, 6, 0, 0, Math.PI * 2);
@@ -1477,7 +1466,6 @@
       ctx.restore();
     }
 
-    // 5. Dance Placeholder
     function renderDancePlaceholder() {
       ctx.fillStyle = '#06080f';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1529,6 +1517,7 @@
 
     function runFinaleSequence() {
       showGameCanvas(false);
+      stopWebcam(); // Camera auto-turns off when finale begins
 
       henActor.style.opacity = '1';
       henActor.style.transform = 'scale(1) translateY(0)';
@@ -1585,6 +1574,7 @@
 
     function resetVisuals() {
       showGameCanvas(false);
+      stopWebcam();
       arenaSquare.classList.remove('quake');
       henActor.style.opacity = '1';
       henActor.style.transform = 'translateX(0) scale(1)';
@@ -1594,6 +1584,7 @@
       dinoJaw.parentElement.classList.remove('chomp');
     }
 
+    // Starts timer and automatically kicks on camera if in Humpty mode
     function startTimer() {
       if (isRunning) return;
 
@@ -1604,6 +1595,11 @@
 
       isRunning = true;
       showGameCanvas(true);
+
+      // Auto-enable Hand Camera if on Humpty mode
+      if (selectedGame === 'slime' && !isCamRunning) {
+        startWebcam();
+      }
 
       timerInterval = setInterval(() => {
         if (remainingSeconds > 0) {
@@ -1622,6 +1618,7 @@
         clearInterval(timerInterval);
         isRunning = false;
         showGameCanvas(false);
+        stopWebcam();
       } else {
         startTimer();
       }
