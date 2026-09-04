@@ -461,7 +461,7 @@
   <div class="dashboard-container">
     <div class="left-panel">
       <h1>Egg Time</h1>
-      <p class="subtitle">Press palms inward to squeeze Humpty, pull apart to stretch!</p>
+      <p class="subtitle">Pull palms apart to stretch Humpty and hear him shout "Ammaaaaa!"</p>
 
       <div class="time-readout" id="display">00:15</div>
 
@@ -612,6 +612,23 @@
       } catch (e) {}
     }
 
+    let lastHumptySpeechTime = 0;
+    function speakAmma() {
+      const now = Date.now();
+      if (now - lastHumptySpeechTime < 1800) return; // Prevent spamming speech
+      lastHumptySpeechTime = now;
+
+      try {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance("Ammaaaaa!");
+          utterance.pitch = 1.7; // High-pitched comical voice
+          utterance.rate = 0.85;  // Slightly drawn out
+          window.speechSynthesis.speak(utterance);
+        }
+      } catch (e) {}
+    }
+
     let totalSeconds = 15;
     let remainingSeconds = 15;
     let timerInterval = null;
@@ -689,6 +706,7 @@
       jigglePhase: 0,
       jiggleIntensity: 0,
       state: 'idle',
+      lastState: 'idle',
       isHeld: false
     };
 
@@ -844,7 +862,7 @@
       }
     });
 
-    // Inward Press Squeeze & Flight Tracking
+    // Inward Squeeze, Outward Stretch & Ammaaaaa Trigger
     function onHandResults(results) {
       if (selectedGame !== 'slime') return;
 
@@ -859,13 +877,11 @@
         return;
       }
 
-      // Track center point between hands or primary hand
       const primaryHand = hands[0];
-      const palmCenter = primaryHand[9]; // Middle knuckle
+      const palmCenter = primaryHand[9];
       
       if (hands.length === 2) {
         const palm2 = hands[1][9];
-        // Center of both hands
         humpty.targetX = (1 - (palmCenter.x + palm2.x) / 2) * canvas.width;
         humpty.targetY = ((palmCenter.y + palm2.y) / 2) * canvas.height;
       } else {
@@ -873,29 +889,33 @@
         humpty.targetY = palmCenter.y * canvas.height;
       }
 
-      // 2 Hands: Inward Press vs Outward Stretch Detection
+      // 2 Hands: Inward Compression vs Outward Stretch
       if (hands.length === 2) {
         const hand1Center = hands[0][9];
         const hand2Center = hands[1][9];
         const dist = Math.hypot(hand1Center.x - hand2Center.x, hand1Center.y - hand2Center.y);
 
-        // Neutral baseline distance is approx 0.28
         const neutralDist = 0.28;
 
         if (dist < neutralDist) {
-          // Pressing palms INWARDS -> Horizontal squeeze (compressed skinny and tall)
+          // Pressing palms INWARDS -> tall skinny squish
           const inwardRatio = Math.max(0, (neutralDist - dist) / 0.18);
           humpty.targetScaleX = Math.max(0.40, 1.0 - inwardRatio * 0.58);
           humpty.targetScaleY = Math.min(2.1, 1.0 + inwardRatio * 0.95);
           humpty.state = 'inward-squeezed';
           humpty.jiggleIntensity = 0.4;
 
+          if (humpty.lastState !== 'inward-squeezed') {
+            playSfx(480, 240, 0.12, 'triangle');
+            humpty.lastState = 'inward-squeezed';
+          }
+
           const subVal = document.getElementById('hudSubValue');
           if (subVal) subVal.textContent = `INWARD SQUEEZE (${Math.round((1 - inwardRatio) * 100)}%)`;
           score += 2;
           hudScore.textContent = score;
         } else {
-          // Pulling palms OUTWARDS -> Horizontal stretch
+          // Pulling palms OUTWARDS -> stretch out & shout AMMAAAAA!
           const outwardRatio = (dist - neutralDist) / 0.25;
           const stretchFactor = Math.min(2.5, 1.0 + outwardRatio * 1.2);
           humpty.targetScaleX = stretchFactor;
@@ -903,9 +923,17 @@
           humpty.state = 'stretched';
           humpty.jiggleIntensity = 0.35;
 
+          // Shouts AMMAAAAA when stretched wide!
+          speakAmma();
+
+          if (humpty.lastState !== 'stretched') {
+            playSfx(280, 680, 0.16, 'sine');
+            humpty.lastState = 'stretched';
+          }
+
           const subVal = document.getElementById('hudSubValue');
-          if (subVal) subVal.textContent = `STRETCHING (${Math.round(stretchFactor * 100)}%)`;
-          score += 1;
+          if (subVal) subVal.textContent = `AMMAAAAA! (${Math.round(stretchFactor * 100)}%)`;
+          score += 2;
           hudScore.textContent = score;
         }
         return;
@@ -931,6 +959,11 @@
           humpty.state = 'squeezed';
           humpty.jiggleIntensity = 0.5;
 
+          if (humpty.lastState !== 'squeezed') {
+            playSfx(420, 200, 0.14, 'triangle');
+            humpty.lastState = 'squeezed';
+          }
+
           const subVal = document.getElementById('hudSubValue');
           if (subVal) subVal.textContent = 'PALM SQUEEZED!';
           score += 2;
@@ -939,6 +972,7 @@
           humpty.targetScaleX = 1.0;
           humpty.targetScaleY = 1.0;
           humpty.state = 'idle';
+          humpty.lastState = 'idle';
           const subVal = document.getElementById('hudSubValue');
           if (subVal) subVal.textContent = 'FLYING WITH PALM';
         }
@@ -963,7 +997,7 @@
         hudSubLabel.innerHTML = 'POPPED: <strong id="hudSubValue" style="color: #facc15;">0 / 36</strong>';
       } else if (mode === 'slime') {
         modeSlimeBtn.classList.add('active');
-        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">PRESS PALMS INWARD</strong>';
+        hudSubLabel.innerHTML = 'ACTION: <strong id="hudSubValue" style="color: #4ade80;">PULL PALMS APART!</strong>';
         if (isRunning && !isCamRunning) startWebcam();
       } else if (mode === 'dance') {
         modeDanceBtn.classList.add('active');
@@ -1417,7 +1451,7 @@
       });
     }
 
-    // 4. Fluid Humpty Dumpty Engine (with Inward Press Squeeze & Flight)
+    // 4. Fluid Humpty Dumpty Engine (with Inward Press Squeeze & Ammaaaaa Speech)
     function renderFluidHumptyGame() {
       ctx.fillStyle = '#080a10';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1463,6 +1497,34 @@
 
       ctx.save();
       ctx.translate(humpty.x, humpty.y);
+
+      // Speech Bubble when Stretched
+      if (humpty.state === 'stretched') {
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(-55, -humpty.baseRadius * 1.5 - 45, 110, 32, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // Little speech pointer triangle
+        ctx.beginPath();
+        ctx.moveTo(-8, -humpty.baseRadius * 1.5 - 13);
+        ctx.lineTo(0, -humpty.baseRadius * 1.5 - 2);
+        ctx.lineTo(8, -humpty.baseRadius * 1.5 - 13);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#dc2626';
+        ctx.font = 'bold 15px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Ammaaaaa!', 0, -humpty.baseRadius * 1.5 - 24);
+        ctx.restore();
+      }
+
       ctx.scale(finalScaleX, finalScaleY);
 
       const tiltAngle = (humpty.vx * 0.025);
@@ -1520,7 +1582,7 @@
       ctx.arc(0, 10, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sweat droplets when squeezed (either 1-hand or inward 2-hands)
+      // Sweat droplets when squeezed
       if (humpty.state === 'squeezed' || humpty.state === 'inward-squeezed') {
         ctx.fillStyle = '#38bdf8';
         ctx.beginPath();
