@@ -1,1 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boiling Egg Timer</title>
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --card-bg: #171a21;
+      --white: #ffffff;
+      --yellow: #facc15;
+      --orange: #f97316;
+      --dark-orange: #ea580c;
+      --gray: #64748b;
+      --text: #f8fafc;
+    }
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .timer-card {
+      background: var(--card-bg);
+      border: 2px solid #222634;
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--white);
+      margin-bottom: 0.35rem;
+    }
+
+    .subtitle {
+      font-size: 0.88rem;
+      color: var(--gray);
+      margin-bottom: 2rem;
+    }
+
+    /* Egg Animation Stage */
+    .egg-stage {
+      position: relative;
+      width: 170px;
+      height: 210px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .egg {
+      width: 130px;
+      height: 170px;
+      background: var(--white);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      box-shadow: 
+        inset -12px -10px 0px rgba(234, 88, 12, 0.15),
+        0 15px 30px rgba(0, 0, 0, 0.35);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .yolk {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle at 35% 35%, var(--yellow), var(--orange));
+      border-radius: 50%;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, opacity 0.3s ease;
+      opacity: 0.85;
+    }
+
+    /* Boiling Water Bubbles */
+    .bubble {
+      position: absolute;
+      background: rgba(250, 204, 21, 0.35);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .bubble-1 { width: 14px; height: 14px; left: 10px; bottom: 20px; }
+    .bubble-2 { width: 20px; height: 20px; right: 8px; bottom: 30px; }
+    .bubble-3 { width: 10px; height: 10px; left: 45%; bottom: 10px; }
+
+    /* Active Boiling Animations */
+    .running .egg {
+      animation: gentle-wobble 1.2s infinite ease-in-out alternate;
+    }
+
+    .running .bubble-1 {
+      animation: float-up 1.6s infinite ease-in;
+    }
+
+    .running .bubble-2 {
+      animation: float-up 1.9s infinite ease-in 0.4s;
+    }
+
+    .running .bubble-3 {
+      animation: float-up 1.3s infinite ease-in 0.8s;
+    }
+
+    @keyframes gentle-wobble {
+      0% { transform: translateY(0px) rotate(-1.5deg); }
+      100% { transform: translateY(-7px) rotate(1.5deg); }
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(0) scale(0.6); opacity: 0; }
+      40% { opacity: 0.8; }
+      100% { transform: translateY(-130px) scale(1.2); opacity: 0; }
+    }
+
+    /* Countdown Display */
+    .timer-display {
+      font-size: 3.5rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--yellow);
+      letter-spacing: 2px;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 0 20px rgba(250, 204, 21, 0.25);
+    }
+
+    /* Preset Selection Buttons */
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+
+    .preset-btn {
+      background: #101319;
+      border: 1.5px solid #282d3c;
+      color: var(--white);
+      border-radius: 12px;
+      padding: 0.75rem 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .preset-btn span {
+      font-size: 0.72rem;
+      color: var(--gray);
+      font-weight: 400;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--orange);
+      transform: translateY(-1px);
+    }
+
+    .preset-btn.active {
+      background: #251d18;
+      border-color: var(--orange);
+      color: var(--yellow);
+    }
+
+    .preset-btn.active span {
+      color: var(--orange);
+    }
+
+    /* Main Action Buttons */
+    .controls {
+      display: flex;
+      gap: 0.8rem;
+      width: 100%;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 0.9rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      color: #0d0f12;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #222634;
+      color: var(--white);
+    }
+
+    .btn-secondary:hover {
+      background: #2d3345;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="timer-card">
+    <h1>Egg Timer</h1>
+    <p class="subtitle">Pick your yolk consistency</p>
+
+    <!-- Visual Egg & Boiling Animation -->
+    <div class="egg-stage" id="eggStage">
+      <div class="bubble bubble-1"></div>
+      <div class="bubble bubble-2"></div>
+      <div class="bubble bubble-3"></div>
+      <div class="egg">
+        <div class="yolk"></div>
+      </div>
+    </div>
+
+    <!-- Live Timer Display -->
+    <div class="timer-display" id="display">06:00</div>
+
+    <!-- Presets -->
+    <div class="presets">
+      <button class="preset-btn" data-time="300">
+        Soft
+        <span>5 min</span>
+      </button>
+      <button class="preset-btn active" data-time="360">
+        Medium
+        <span>6 min</span>
+      </button>
+      <button class="preset-btn" data-time="540">
+        Hard
+        <span>9 min</span>
+      </button>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn btn-secondary" id="resetBtn">Reset</button>
+      <button class="btn btn-primary" id="startBtn">Start</button>
+    </div>
+  </main>
+
+  <script>
+    let timerInterval = null;
+    let totalSeconds = 360; // default 6 minutes
+    let remainingSeconds = totalSeconds;
+    let isRunning = false;
+
+    const display = document.getElementById('display');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const eggStage = document.getElementById('eggStage');
+    const presetButtons = document.querySelectorAll('.preset-btn');
+
+    // Format mm:ss display
+    function updateDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    // Play a friendly beep when done using Web Audio API (no external file needed)
+    function playChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3); // A5
+
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.8);
+      } catch (err) {
+        console.log('Audio notification ready.');
+      }
+    }
+
+    function startTimer() {
+      if (isRunning) {
+        // Pause timer
+        clearInterval(timerInterval);
+        isRunning = false;
+        startBtn.textContent = 'Resume';
+        eggStage.classList.remove('running');
+        return;
+      }
+
+      isRunning = true;
+      startBtn.textContent = 'Pause';
+      eggStage.classList.add('running');
+
+      timerInterval = setInterval(() => {
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
+          updateDisplay();
+        } else {
+          clearInterval(timerInterval);
+          isRunning = false;
+          eggStage.classList.remove('running');
+          startBtn.textContent = 'Start';
+          playChime();
+          alert('Eggs are done! Take them out of the pot.');
+          remainingSeconds = totalSeconds;
+          updateDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      remainingSeconds = totalSeconds;
+      eggStage.classList.remove('running');
+      startBtn.textContent = 'Start';
+      updateDisplay();
+    }
+
+    // Preset button click handling
+    presetButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        presetButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        totalSeconds = parseInt(btn.getAttribute('data-time'), 10);
+        resetTimer();
+      });
+    });
+
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    // Initial render
+    updateDisplay();
+  </script>
+</body>
+</html>
