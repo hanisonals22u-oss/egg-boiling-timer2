@@ -2,47 +2,52 @@
 
 
 
-# [Project Name] 🎯
+# [Egg boil timer] 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [team it]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
+- Team Lead: [Merin] - [sahrdaya college]
+- Member 2: [Hani Sonal] - [sahrdaya college]
 - Member 3: [Name] - [College]
 
 ### Project Description
-[2-3 lines about what your project does]
+Egg Time is an interactive, browser-based arcade timer application designed to keep users entertained while waiting for an egg to boil or a timer to run down. Built using standard web technologies (HTML5, CSS, and vanilla JavaScript), it combines countdown utilities with browser-native sensory input APIs (Web Audio API, Web Speech API, and MediaPipe computer vision).
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+time pass 
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+[waste time]
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+- [Languages used]-HTML, CSS, JavaScript
+- [Frameworks used]-None
+- [Libraries used]-MediaPipe
+- [Tools used]-VSCode, Git, GitHub, Vercel
 
 For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
+- [List main components]-Laptop, Webcam, Microphone, Display, Speakers
+- [List specifications]-720p/1080p, Omnidirectional, Stereo, 60Hz
+- [List tools required]-None
 
 ### Implementation
 For Software:
 # Installation
-[commands]
+[commands]-git clone https://github.com/hanisonals22u-oss/egg-boiling-timer2.git
+cd egg-boiling-timer2
 
 # Run
-[commands]
+[commands]-# Option 1: Direct browser launch
+start timer.html
+
+# Option 2: Local HTTP server
+npx serve .
 
 ### Project Documentation
 For Software:
@@ -50,6 +55,8 @@ For Software:
 # Screenshots (Add at least 3)
 ![Screenshot1](Add screenshot 1 here with proper name)
 *Add caption explaining what this shows*
+<img width="953" height="544" alt="image" src="https://github.com/user-attachments/assets/d5723c00-31bb-4278-8b25-1ac0583756de" />
+
 
 ![Screenshot2](Add screenshot 2 here with proper name)
 *Add caption explaining what this shows*
@@ -82,15 +89,15 @@ For Hardware:
 
 ### Project Demo
 # Video
-[Add your demo video link here]
+[https://drive.google.com/file/d/1gBAFXg9obuYMPiACcrfsioDb-T0enE7u/view?usp=sharing]
 *Explain what the video demonstrates*
 
 # Additional Demos
 [Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
+- [MERIN RAJU]: coding
+- [HANI SONAL SHYJUMON]: coding 
 - [Name 3]: [Specific contributions]
 
 ---
